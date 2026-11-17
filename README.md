@@ -122,6 +122,10 @@ O build gera instalador e portátil na pasta `release/`. `dist/` contém o códi
 | `tests/` | Testes unitários, integração e interface |
 | `.github/workflows/` | Validação e releases da edição Free |
 
+## Comunidade e ajuda
+
+Entre no [Discord oficial do Âmago](https://discord.gg/v5eQyB2E6f) para tirar dúvidas, compartilhar projetos e conversar no canal da edição Free. No aplicativo, abra **Configurações → Sobre o Free** ou pressione **Ctrl Shift P** e busque **Discord**. O convite abre no navegador; participar do servidor é opcional e não conecta seus arquivos locais ao Discord.
+
 ## Manutenção e contribuições
 
 Este projeto é mantido de forma pontual. Não há calendário de lançamentos nem garantia de prazo de resposta. São bem-vindas correções reproduzíveis, melhorias de documentação e ajustes de acessibilidade que preservem o escopo simples desta edição.
