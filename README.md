@@ -8,7 +8,7 @@ O Âmago Free é uma edição mais simples e com recursos limitados do [Âmago](
 
 Esta edição é uma base estável: recebe **correções quando necessário**, sem compromisso de incorporar novos recursos da edição oficial. Não possui conta, marketplace, instalação ou execução de plugins, nem serviços de nuvem. Esses componentes não fazem parte deste repositório.
 
-[Baixar para Windows](https://github.com/Nixye/amago-free/releases/latest) · [Reportar um problema](https://github.com/Nixye/amago-free/issues) · [Conhecer a edição oficial](https://amagoapp.com)
+[Baixar para Windows](https://github.com/Nixye/amago-free/releases/latest) · [Reportar um problema](https://github.com/Nixye/amago-free/issues) · [Conhecer a edição oficial](https://amagoapp.com) · [Comunidade no Discord](https://discord.gg/v5eQyB2E6f)
 
 ## O que está incluído
 
