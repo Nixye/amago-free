@@ -141,3 +141,11 @@ Releases de manutenção usam tags `v<versão>` correspondentes a `package.json`
 Copyright © 2026 Luna. O código e os recursos originais desta edição são distribuídos sob **GNU General Public License, versão 3 somente (`GPL-3.0-only`)**. Consulte o texto integral em [LICENSE](LICENSE). Dependências e fontes conservam suas próprias licenças, indicadas em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 O aplicativo é fornecido sem garantia, conforme a licença. A licença de copyright não concede direitos de marca: distribuições modificadas devem identificar claramente suas alterações e não sugerir endosso da edição oficial. A identidade Âmago é compartilhada pelas duas edições mantidas por Luna.
+
+### Configurações e navegação revisadas
+
+Use **Edição** para fonte, espaçamento, quebra de linha e ortografia do editor, e **Visualização** para tamanho, espaçamento e largura da leitura. **Atalhos** permite pesquisar e personalizar 17 combinações; conflitos são indicados antes de salvar. **Atualizações** oferece a opção marcada por padrão para consultar novas versões ao iniciar.
+
+O menu de contexto dos documentos oferece **Abrir ao lado**. Arraste uma nota ou texto do explorador para uma metade do editor para escolher o lado; a área de destino fica destacada. Até quatro colunas são preservadas na sessão.
+
+No mapa, busca e relações ficam juntas; **Ajustar visual do mapa** reúne organização, nomes e animação. A vizinhança percorre toda a rede conectada antes de aplicar a busca, mantendo os caminhos através de notas ocultas. O limite visual continua sendo 500 pontos.

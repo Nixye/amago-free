@@ -18,6 +18,12 @@ const root=path.join(__dirname,'../dist');
 protocol.handle('amago',request=>{const url=new URL(request.url);if(url.host!=='app')return new Response('',{status:403});const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!file.startsWith(root+path.sep))return new Response('',{status:403});return net.fetch(pathToFileURL(file).href)});
 const dataDir=app.getPath('userData'),file=path.join(dataDir,'vault.json');
 const trusted=event=>event.senderFrame===win?.webContents.mainFrame&&event.senderFrame?.url.startsWith('amago://app/');
+let freeUpdateRequest=null,freeUpdateResult=null,freeUpdateChecked=0;
+ipcMain.handle('free-updates:check',async event=>{
+ if(!trusted(event))throw Error('Invalid origin');
+ if(freeUpdateResult&&Date.now()-freeUpdateChecked<60000)return freeUpdateResult;
+ freeUpdateRequest??=require('./free-updates.cjs').checkFreeRelease(app.getVersion(),net.fetch).then(result=>{freeUpdateChecked=Date.now();freeUpdateResult=result;return result}).finally(()=>freeUpdateRequest=null);return freeUpdateRequest;
+});
 let project=null;const recents=new RecentProjects(path.join(dataDir,'projects.json'));
 const connectProject=async root=>{const candidate=await Workspace.open(root),tree=await candidate.tree(),recent=await recents.remember(candidate.root);candidate.operations=operations(candidate);project=candidate;return {...tree,recentId:recent.id}};
 ipcMain.handle('project:recent',async event=>{if(!trusted(event))throw Error('Invalid origin');try{return {projects:await recents.list()}}catch(e){return {error:e.message}}});

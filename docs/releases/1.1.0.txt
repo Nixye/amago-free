@@ -1,0 +1,12 @@
+Âmago Free 1.1.0 — Mais clareza no seu espaço de escrita
+
+- Configurações reorganizadas com menus próprios para Edição, Visualização e Atalhos.
+- Campos de tamanho e espaçamento mais claros, com prévias e preferências independentes para escrever e ler.
+- Aparência destaca o tema em uso e organiza a escolha de tema conforme o sistema.
+- 17 atalhos personalizáveis, com busca, detecção de combinações em conflito e restauração dos padrões.
+- Apenas um botão para fixar ou recolher a barra lateral, dentro do menu lateral.
+- Abrir ao lado no menu de contexto dos documentos e divisão por arraste, com indicação de esquerda ou direita e preservação dos rascunhos.
+- Mapa com busca e relações agrupadas, ajustes visuais recolhidos e exploração de toda a vizinhança conectada.
+- Nova tela Atualizações: consulta às releases do Free, com opção marcada por padrão para verificar ao iniciar. A instalação continua manual.
+
+O Free permanece independente, local e sem conta, marketplace, plugins ou nuvem.

@@ -4,7 +4,7 @@
 function atlasRelationshipData(all,{relation='hybrid',query='',linked=false,focus=null,depth=1,limit=500,incidentOnly=false}={}){
  all=all.filter(d=>!d.kind||d.kind==='markdown');
  const enabled=new Set(Array.isArray(relation)?relation:relation==='hybrid'?['links','tags','mentions']:[relation]);
- const candidates=all.filter(d=>AmagoSearch.matches(d,query));
+ const candidates=focus?all:all.filter(d=>AmagoSearch.matches(d,query));
  const ids=new Set(candidates.map(docId)),metadata=new Map(candidates.map(d=>[docId(d),AmagoSearch.metadata(d.body)]));
  const direct=new Map(candidates.map(d=>[docId(d),new Set()])),references=[],groups={tags:new Map(),mentions:new Map()},membership=new Map();
  for(const doc of candidates){
@@ -28,7 +28,7 @@ function atlasRelationshipData(all,{relation='hybrid',query='',linked=false,focu
  if(focus){
   neighborhood=new Set(ids.has(focus)?[focus]:[]);
   let frontier=[...neighborhood];const expanded=new Set();
-  for(let level=0;level<Math.max(1,Math.min(3,Number(depth)||1));level++){
+  for(let level=0;level<(depth===Infinity?all.length:Math.max(1,Math.min(3,Number(depth)||1)));level++){
    const next=new Set();
    for(const id of frontier){
     for(const other of direct.get(id)||[])if(!neighborhood.has(other))next.add(other);
@@ -41,7 +41,7 @@ function atlasRelationshipData(all,{relation='hybrid',query='',linked=false,focu
   }
  }
  const filtered=candidates.filter(d=>{
-  const id=docId(d);return (!neighborhood||neighborhood.has(id))&&(!linked||direct.get(id).size||(membership.get(id)||[]).some(group=>group.ids.size>1));
+  const id=docId(d);return AmagoSearch.matches(d,query)&&(!neighborhood||neighborhood.has(id))&&(!linked||direct.get(id).size||(membership.get(id)||[]).some(group=>group.ids.size>1));
  });
  // Keep the focused note visible even in a densely connected neighborhood.
  if(focus){const at=filtered.findIndex(d=>docId(d)===focus);if(at>0)filtered.unshift(...filtered.splice(at,1))}
@@ -68,7 +68,7 @@ function atlasRelationshipData(all,{relation='hybrid',query='',linked=false,focu
 }
 graphData=function(){
  const prefs=graphPreferences();
- return atlasRelationshipData(discoveryDocs(),{relation:atlasSelectedRelations(),query:discovery.graphQuery,linked:discovery.linked,focus:discovery.localFocus,depth:prefs.depth||1});
+ return atlasRelationshipData(discoveryDocs(),{relation:atlasSelectedRelations(),query:discovery.graphQuery,linked:discovery.linked,focus:discovery.localFocus,depth:Infinity});
 };
 const atlasRelationLabels={links:'Links',tags:'Tags em comum',mentions:'Menções em comum'};
 function atlasSelectedRelations(){const prefs=graphPreferences();return Array.isArray(prefs.relations)?Object.keys(atlasRelationLabels).filter(type=>prefs.relations.includes(type)):prefs.relation&&prefs.relation!=='hybrid'?[prefs.relation]:Object.keys(atlasRelationLabels)}

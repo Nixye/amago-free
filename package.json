@@ -1,6 +1,6 @@
 {
   "name": "amago-free",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Âmago Free: Markdown e conhecimento local, sem conta ou extensões.",
   "author": "Luna",
   "private": true,
@@ -8,13 +8,14 @@
   "scripts": {
     "start": "electron .",
     "web": "node serve.mjs",
-    "test": "node verify.mjs && node tests/atlas-relations.mjs && node tests/browser-operations.mjs && node tests/compatibility.mjs && node tests/discovery.mjs && node tests/document-navigation.mjs && node tests/editor-fidelity.mjs && node tests/editor-operations.mjs && node tests/git.mjs && node tests/interaction.mjs && node tests/navigation.mjs && node tests/refinement.mjs && node tests/studio.mjs && node tests/tables.mjs && node tests/workspace-navigation.mjs && node tests/workspace-productivity.mjs && node tests/workspace.mjs && node tests/writing-preferences.mjs",
+    "test": "node verify.mjs && node tests/atlas-relations.mjs && node tests/browser-operations.mjs && node tests/compatibility.mjs && node tests/discovery.mjs && node tests/document-navigation.mjs && node tests/editor-fidelity.mjs && node tests/editor-operations.mjs && node tests/git.mjs && node tests/interaction.mjs && node tests/navigation.mjs && node tests/refinement.mjs && node tests/studio.mjs && node tests/tables.mjs && node tests/workspace-navigation.mjs && node tests/workspace-productivity.mjs && node tests/workspace.mjs && node tests/writing-preferences.mjs && node tests/free-updates.mjs",
     "pretest": "node scripts/version.mjs",
     "test:visual": "electron tests/visual.cjs",
     "dist:win": "electron-builder --win nsis portable --x64 --publish never",
     "predist:win": "node scripts/version.mjs",
-    "test:features": "electron tests/document-navigation-visual.cjs && electron tests/editor-operations-visual.cjs && electron tests/editor-visual.cjs && electron tests/focus.cjs && electron tests/layout-regressions.cjs && electron tests/reading-image-visual.cjs && electron tests/reading-images-async.cjs && electron tests/tables-visual.cjs && electron tests/workspace-navigation-visual.cjs && electron tests/workspace-productivity-visual.cjs && electron tests/writing-preferences-visual.cjs && electron tests/free-edition.cjs",
-    "test:artifacts": "node scripts/verify-artifacts.mjs"
+    "test:features": "electron tests/document-navigation-visual.cjs && electron tests/editor-operations-visual.cjs && electron tests/editor-visual.cjs && electron tests/focus.cjs && electron tests/layout-regressions.cjs && electron tests/reading-image-visual.cjs && electron tests/reading-images-async.cjs && electron tests/tables-visual.cjs && electron tests/workspace-navigation-visual.cjs && electron tests/workspace-productivity-visual.cjs && electron tests/writing-preferences-visual.cjs && electron tests/free-edition.cjs && npm run test:usability",
+    "test:artifacts": "node scripts/verify-artifacts.mjs",
+    "test:usability": "electron tests/usability-visual.cjs"
   },
   "devDependencies": {
     "electron": "45.3.1",

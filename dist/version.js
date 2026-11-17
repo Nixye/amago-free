@@ -1,2 +1,2 @@
 // Generated from package.json by scripts/version.mjs.
-window.amagoVersion="1.0.2";
+window.amagoVersion="1.1.0";

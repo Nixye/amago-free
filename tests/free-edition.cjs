@@ -8,14 +8,14 @@ app.whenReady().then(async()=>{const win=new BrowserWindow({show:false,width:144
  win.webContents.on('console-message',(_event,level,message)=>{if(level===3)errors.push(message)});
  assert.equal(pkg.name,'amago-free');assert.equal(pkg.build.appId,'app.amago.free');assert.equal(pkg.license,'GPL-3.0-only');assert.equal(pkg.dependencies,undefined);assert.equal(pkg.build.publish,undefined);
  for(const forbidden of ['desktop/community.cjs','desktop/community-config.json','desktop/auto-updates.cjs','desktop/updates.cjs','dist/plugin-frame.html','dist/plugin-runner.js','dist/extension-core.js','dist/community.js','dist/marketplace.js','dist/cloud.js'])assert(!fs.existsSync(path.join(root,forbidden)),forbidden);
- const preload=fs.readFileSync(path.join(root,'desktop/preload.cjs'),'utf8');assert(!/community:|updates:/.test(preload));
+ const preload=fs.readFileSync(path.join(root,'desktop/preload.cjs'),'utf8');assert(!/community:|(?<!free-)updates:/.test(preload));
  await win.loadFile(path.join(root,'dist/index.html'));await new Promise(r=>setTimeout(r,1500));
  const outcome=await win.webContents.executeJavaScript(`(async()=>{
   interfacePrefs().splashEnabled=false;await finishStartup();closeModal();render();
   if(typeof pluginRuntime!=='undefined'||typeof AmagoExtensions!=='undefined'||actions.plugins)throw Error('Extension runtime leaked');
-  if(settingTabs.some(t=>/plugins|community|account|updates|cloud/.test(t[0])))throw Error('Exclusive settings leaked');
+  if(settingTabs.some(t=>/plugins|community|account|cloud/.test(t[0])))throw Error('Exclusive settings leaked');
   showLauncher();if(document.querySelector('[data-action="cloud-projects"],[data-action="create-project"]'))throw Error('Unavailable launcher action');closeModal();
-  for(const tab of ['general','appearance','data','about']){showSettings(tab);if(!document.querySelector('#settings-content'))throw Error('Missing settings '+tab);closeModal()}
+  for(const tab of ['general','editing','reading','shortcuts','appearance','data','updates','about']){showSettings(tab);if(!document.querySelector('#settings-content'))throw Error('Missing settings '+tab);closeModal()}
   showSettings('appearance');document.querySelector('[data-theme-id="forest"]').click();if(vault.skin!=='forest')throw Error('Native theme selection failed');closeModal();
   state.view='notes';state.mode='edit';render();const editor=document.querySelector('#editor');if(!editor)throw Error('Editor missing');editor.value='# Free isolation test';editor.dispatchEvent(new Event('input',{bubbles:true}));await window.amagoFlush();if(!note().body.includes('Free isolation test'))throw Error('Edit not saved');
   if(!localStorage.getItem('amago-free-vault-v1')||localStorage.getItem('amago-vault-v1'))throw Error('Storage not isolated');

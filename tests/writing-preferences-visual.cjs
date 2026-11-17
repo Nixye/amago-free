@@ -16,7 +16,7 @@ app.whenReady().then(async()=>{
    closeModal();let editor=document.querySelector('#editor');
    check(editor.style.fontSize==='22px'&&editor.style.lineHeight==='2.1'&&editor.wrap==='off'&&editor.spellcheck,'Editor preferences not applied');
    check(note().body===original,'Preferences rewrote document bytes');check(JSON.parse(localStorage.getItem(KEY)).writing.fontSize===22,'Preferences not persisted');
-   showSettings('general');await new Promise(r=>setTimeout(r,30));check(document.querySelector('#settings-content .writing-preferences'),'General settings lack editor preferences');closeModal();
+   showSettings('editing');await new Promise(r=>setTimeout(r,30));check(document.querySelector('#settings-content .writing-preferences'),'Editing settings lack editor preferences');closeModal();
    const native=[];window.amagoDesktop={appearance:async value=>{native.push(value);return {supported:true,enabled:true}},fullscreen:async value=>({fullscreen:!!value})};
    await enterDocumentFocus();check(document.querySelector('#editor').style.fontSize==='22px','Focus source editor ignored preferences');await exitDocumentFocus();
    const second=vault.notes.find(n=>n.id!==state.id);studio.panes=[{source:'vault',id:state.id,mode:'edit'},{source:'vault',id:second.id,mode:'edit'}];studio.active=0;renderMain();check([...document.querySelectorAll('[data-pane-editor]')].every(el=>el.style.fontSize==='22px'&&el.wrap==='off'),'Split columns ignored preferences');

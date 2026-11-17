@@ -1,0 +1,56 @@
+const {app,BrowserWindow}=require('electron');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+app.setPath('userData',fs.mkdtempSync(path.join(require('node:os').tmpdir(),'amago-usability-')));
+app.whenReady().then(async()=>{
+ const win=new BrowserWindow({show:false,width:1440,height:1000,webPreferences:{sandbox:true,contextIsolation:true,offscreen:true,backgroundThrottling:false}}),errors=[];
+ win.webContents.on('console-message',(_event,_level,message)=>{if(/Uncaught|SyntaxError/.test(message||''))errors.push(message)});
+ const run=async code=>{const result=await win.webContents.executeJavaScript(`(async()=>{try{${code}}catch(error){return {testError:error.stack}}})()`);if(result?.testError)throw Error(result.testError);return result};
+ const capture=async name=>{await new Promise(r=>setTimeout(r,100));fs.mkdirSync(path.resolve(__dirname,'../artifacts'),{recursive:true});fs.writeFileSync(path.resolve(__dirname,'../artifacts/usability-'+name+'.png'),(await win.webContents.capturePage()).toPNG())};
+ try{
+  await win.loadFile(path.resolve(__dirname,'../dist/index.html'));
+  await run(`interfacePrefs().splashEnabled=false;await finishStartup();await new Promise(r=>setTimeout(r,1500));closeModal();$('#startup-splash')?.remove();state.view='notes';state.mode='edit';render();`);
+  assert.equal(await run(`return document.querySelectorAll('[data-studio-pin],[data-action="sidebar"]').length`),1);
+  for(const tab of ['general','editing','reading','appearance','shortcuts','data']){
+   await run(`showSettings('${tab}');await new Promise(r=>setTimeout(r,30));`);
+   assert.equal(await run(`return $('#settings-content').getAttribute('aria-labelledby')`),'settings-'+tab);
+   assert(await run(`return $('#settings-content').scrollWidth<=$('#settings-content').clientWidth+2`),'Overflow in '+tab);
+   await capture(tab);
+  }
+  await run(`showSettings('shortcuts');const input=$('[data-keybinding="search"]');input.focus();input.dispatchEvent(new KeyboardEvent('keydown',{key:'j',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));`);
+  assert.equal(await run(`return interfacePrefs().keybindings.search`),'Ctrl+Shift+J');
+  await run(`const input=$('[data-keybinding="save"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'j',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));`);
+  assert.match(await run(`return $('#keybinding-status').textContent`),/já está em uso/);
+  await run(`closeModal();document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'j',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));`);
+  assert(await run(`return !!$('#hybrid-query')`),'Remapped search did not execute');
+  await run(`closeModal();document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true}));`);
+  assert(!await run(`return !!$('#hybrid-query')`),'Old binding still active');
+  await run(`showSettings('reading');const field=$('[data-reading="size"]');field.value='24';field.dispatchEvent(new Event('change',{bubbles:true}));closeModal();state.mode='read';renderMain();`);
+  assert.equal(await run(`return readingPreferences().size`),24);
+  assert.equal(await run(`return getComputedStyle($('.note-main .markdown')).fontSize`),'24px');
+  await run(`state.mode='edit';render();const next=vault.notes.find(n=>n.id!==state.id);window.testSplitId=next.id;window.firstSplitId=state.id;window.originalSplitBody=note().body;const row=[...document.querySelectorAll('#sidebar [data-note]')].find(r=>r.dataset.note===next.id);showFileMenu(row,400,200);[...$('#file-context-menu').querySelectorAll('button')].find(b=>b.textContent.includes('Abrir ao lado')).click();await new Promise(r=>setTimeout(r,50));`);
+  assert.equal(await run(`return studio.panes.length`),2);
+  assert.equal(await run(`return studio.panes[1].id`),await run(`return window.testSplitId`));
+  await run(`const editor=$('[data-pane-editor="0"]');editor.value+='\\nRascunho preservado';editor.dispatchEvent(new Event('input',{bubbles:true}));window.splitBody=editor.value;const next=vault.notes.find(n=>!studio.panes.some(p=>p.id===n.id));window.dragId=next.id;const row=[...document.querySelectorAll('#sidebar [data-note]')].find(r=>r.dataset.note===next.id);const transfer=new DataTransfer();row.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:transfer}));const pane=$('[data-pane="0"]'),rect=pane.getBoundingClientRect();pane.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:transfer,clientX:rect.left+10,clientY:rect.top+80}));`);
+  assert.match(await run(`return $('#document-drop-preview').textContent`),/esquerda/);
+  await capture('drop-left');
+  await run(`$('[data-pane="0"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:new DataTransfer()}));await new Promise(r=>setTimeout(r,50));`);
+  assert.equal(await run(`return studio.panes[0].id`),await run(`return window.dragId`));
+  assert.equal(await run(`return vault.notes.find(n=>n.id===window.firstSplitId).body`),await run(`return window.splitBody`));
+  await capture('split');
+  await run(`studio.panes=[studio.panes[0]];const other=vault.notes.find(n=>n.id!==studio.panes[0].id&&n.id!==window.testSplitId);openNote(other.id);window.expectedSplitFirst=other.id;await openDocumentBeside({project:false,id:window.testSplitId},1);`);
+  assert.equal(await run(`return studio.panes[0].id`),await run(`return window.expectedSplitFirst`),'Single-pane state must follow the current document');
+  assert(await run(`return [...document.querySelectorAll('#tabbar [data-note]')].some(row=>row.draggable)`),'Document tabs must be draggable');
+  await run(`closeModal();state.view='graph';renderMain();`);
+  assert(!await run(`return !!$('#atlas-depth')`));assert(await run(`return !!$('.map-filter-panel .atlas-relations')&&!$('.map-display-options').open`));
+  await capture('map');
+  await run(`window.amagoDesktop={updates:{info:async()=>({version:window.amagoVersion,channel:'portable',automatic:false}),check:async()=>({status:'current'})},freeUpdates:async()=>({status:'current',version:window.amagoVersion})};showSettings('updates');await new Promise(r=>setTimeout(r,40));`);
+  assert(await run(`return $('#setting-startup-updates').checked`));
+  await run(`$('#setting-startup-updates').click();closeModal();showSettings('updates');await new Promise(r=>setTimeout(r,40));`);
+  assert(!await run(`return $('#setting-startup-updates').checked`));
+  win.setSize(620,820);
+  for(const tab of ['editing','reading','shortcuts','appearance']){await run(`showSettings('${tab}');await new Promise(r=>setTimeout(r,40));`);assert(await run(`return $('#settings-content').scrollWidth<=$('#settings-content').clientWidth+2`),'Narrow overflow in '+tab)}
+  await capture('narrow');assert.deepEqual(errors,[]);
+  console.log('Usability: settings, reading, rebinding/conflicts, single sidebar pin, context split, drag placement/draft preservation, map controls and startup preference passed.');
+  win.destroy();app.quit();
+ }catch(error){console.error(error);win.destroy();app.exit(1)}
+});
