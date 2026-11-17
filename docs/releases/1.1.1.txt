@@ -1,0 +1,10 @@
+Âmago Free 1.1.1 — Mais espaço para suas conexões
+
+- Mapa de Conexões com pesquisa, relações, vizinhança e ajustes visuais em um painel recolhível à direita, fechado por padrão.
+- Busca e filtros preservados ao recolher o painel. Em janelas menores, os controles abrem sobre o mapa.
+- Configurações mais compactas, com fontes e espaçamentos reduzidos.
+- Atalhos com campos menores e alinhados em uma coluna.
+- Busca de temas por nome ou autor, preservada ao escolher um tema.
+- Opção Acompanhar o sistema reorganizada, com seleção clara dos temas claro e escuro.
+
+O Free continua local e independente, sem conta, marketplace, plugins ou nuvem. A instalação da atualização permanece manual.

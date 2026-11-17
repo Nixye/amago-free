@@ -29,7 +29,7 @@ const writingApplyTheme=applyTheme;
 applyTheme=function(){const prefs=systemThemePreferences();if(prefs.mode==='system')vault.skin=writingSystemMedia.matches?prefs.dark:prefs.light;writingApplyTheme();applyNativeWritingTheme()};
 function themePreferenceFields(){
  const prefs=systemThemePreferences(),options=mode=>themeCatalog().filter(t=>t.mode===mode).map(t=>`<option value="${esc(t.id)}" ${prefs[mode]===t.id?'selected':''}>${esc(t.name)}</option>`).join('');
- return `<fieldset class="system-theme-preferences"><legend>Acompanhar o sistema</legend><label>Escolha do tema<select class="field" id="theme-preference-mode"><option value="manual" ${prefs.mode==='manual'?'selected':''}>Manual</option><option value="system" ${prefs.mode==='system'?'selected':''}>Automática · claro/escuro do sistema</option></select></label><div class="system-theme-pair" ${prefs.mode!=='system'?'hidden':''}><label>Tema claro<select class="field" data-system-theme="light">${options('light')}</select></label><label>Tema escuro<select class="field" data-system-theme="dark">${options('dark')}</select></label></div><small>Selecionar uma paleta abaixo volta ao modo manual.</small></fieldset>`;
+ return `<fieldset class="system-theme-preferences"><div class="system-theme-heading"><div><strong>Acompanhar o sistema</strong><p>Alterne entre temas claros e escuros conforme a aparência do dispositivo.</p></div><label>Modo de aparência<select class="field" id="theme-preference-mode"><option value="manual" ${prefs.mode==='manual'?'selected':''}>Manual</option><option value="system" ${prefs.mode==='system'?'selected':''}>Acompanhar sistema</option></select></label></div><div class="system-theme-pair" ${prefs.mode!=='system'?'hidden':''}><label>Tema claro<select class="field" data-system-theme="light">${options('light')}</select></label><label>Tema escuro<select class="field" data-system-theme="dark">${options('dark')}</select></label></div><small>Selecionar uma paleta abaixo volta ao modo manual.</small></fieldset>`;
 }
 function mountWritingSettings(){
 
@@ -39,13 +39,13 @@ new MutationObserver(mountWritingSettings).observe($('#modal-root'),{childList:t
 document.addEventListener('change',e=>{
  if(e.target.id==='theme-preference-mode'||e.target.matches('[data-system-theme]')){
   const prefs=systemThemePreferences();if(e.target.id==='theme-preference-mode')prefs.mode=e.target.value;else prefs[e.target.dataset.systemTheme]=e.target.value;
-  vault.themePreference=prefs;applyTheme();persist();$('.system-theme-pair')?.toggleAttribute('hidden',prefs.mode!=='system');document.querySelectorAll('[data-theme-id]').forEach(button=>button.classList.toggle('active',button.dataset.themeId===vault.skin));
+  vault.themePreference=prefs;applyTheme();persist();$('.system-theme-pair')?.toggleAttribute('hidden',prefs.mode!=='system');document.querySelectorAll('[data-theme-id]').forEach(button=>{const active=button.dataset.themeId===vault.skin;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));button.querySelector('.theme-selected')?.remove();if(active)button.insertAdjacentHTML('beforeend','<span class="theme-selected">✓ Em uso</span>')});
  }
 });
 function disableAutomaticTheme(){if(systemThemePreferences().mode==='system')vault.themePreference={...systemThemePreferences(),mode:'manual'}}
 window.addEventListener('click',e=>{if(e.target.closest('[data-theme-id]'))disableAutomaticTheme()},true);
 window.addEventListener('change',e=>{if(e.target.id==='theme')disableAutomaticTheme()},true);
-function onWritingSystemThemeChange(){if(systemThemePreferences().mode!=='system')return;applyTheme();persist();document.querySelectorAll('[data-theme-id]').forEach(button=>button.classList.toggle('active',button.dataset.themeId===vault.skin))}
+function onWritingSystemThemeChange(){if(systemThemePreferences().mode!=='system')return;applyTheme();persist();document.querySelectorAll('[data-theme-id]').forEach(button=>{const active=button.dataset.themeId===vault.skin;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));button.querySelector('.theme-selected')?.remove();if(active)button.insertAdjacentHTML('beforeend','<span class="theme-selected">✓ Em uso</span>')})}
 writingSystemMedia.addEventListener('change',onWritingSystemThemeChange);
 
 const writingShortcutGroups=[

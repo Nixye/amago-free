@@ -1,6 +1,7 @@
 'use strict';
 
 settingTabs.splice(1,0,['editing','Edição','edit'],['reading','Visualização','eye'],['shortcuts','Atalhos','panel']);
+const installedFilters={themes:'',plugins:'',pluginState:'all'};
 const usabilitySettings=showSettings;
 showSettings=function(tab='general'){
  studio.settings=tab;
@@ -26,7 +27,12 @@ document.addEventListener('input',event=>{if(event.target.matches('[data-writing
 document.addEventListener('change',event=>{const field=event.target.closest('[data-reading]');if(!field||!field.checkValidity())return;interfacePrefs().reading={...readingPreferences(),[field.dataset.reading]:field.dataset.reading==='width'?field.value:Number(field.value)};applyReadingPreferences();persist()});
 function polishAppearanceSettings(content){
  content.classList.add('clear-settings');const intro=content.querySelector(':scope>p');if(intro)intro.textContent='Escolha um tema e ajuste a transparência da janela. A leitura e a escrita têm categorias próprias.';
- mountWritingSettings();const grid=content.querySelector('.theme-grid');if(grid){grid.insertAdjacentHTML('beforebegin','<h3>Temas instalados</h3>');for(const button of grid.querySelectorAll('[data-theme-id]')){button.setAttribute('aria-pressed',String(button.dataset.themeId===document.body.dataset.skin));if(button.dataset.themeId===document.body.dataset.skin)button.insertAdjacentHTML('beforeend','<span class="theme-selected">✓ Em uso</span>')}}
+ mountWritingSettings();const grid=content.querySelector('.theme-grid');if(grid){
+  grid.insertAdjacentHTML('beforebegin','<h3>Temas instalados</h3><input class="field" id="installed-theme-query" type="search" aria-label="Buscar temas instalados" placeholder="Buscar tema ou autor…"><p id="installed-theme-count" class="settings-result-count" role="status"></p>');
+  for(const button of grid.querySelectorAll('[data-theme-id]')){button.setAttribute('aria-pressed',String(button.dataset.themeId===document.body.dataset.skin));if(button.dataset.themeId===document.body.dataset.skin)button.insertAdjacentHTML('beforeend','<span class="theme-selected">✓ Em uso</span>')}
+  const query=$('#installed-theme-query');query.value=installedFilters.themes;
+  const refresh=()=>{installedFilters.themes=query.value;const q=AmagoSearch.normalize(query.value);let count=0;for(const button of grid.querySelectorAll('[data-theme-id]')){const theme=themeCatalog().find(t=>t.id===button.dataset.themeId);button.hidden=!AmagoSearch.normalize(theme.name+' '+theme.author).includes(q);if(!button.hidden)count++}$('#installed-theme-count').textContent=count?count+' tema(s) encontrado(s)':'Nenhum tema encontrado. Tente outro nome ou autor.'};query.oninput=refresh;refresh();
+ }
  const imports=content.querySelector('.modal-actions');if(imports){const details=document.createElement('details');details.className='settings-advanced';details.innerHTML='<summary>Importar ou exportar um tema</summary>';imports.before(details);details.append(imports)}
 }
 function polishPluginSettings(content){
@@ -35,7 +41,8 @@ function polishPluginSettings(content){
  list.insertAdjacentHTML('beforebegin','<h3>Plugins instalados</h3><div class="plugin-filter-row"><input class="field" id="installed-plugin-query" type="search" aria-label="Buscar plugins instalados" placeholder="Buscar plugin…"><select class="field" id="installed-plugin-state" aria-label="Estado do plugin"><option value="all">Todos</option><option value="enabled">Ativos</option><option value="disabled">Desativados</option></select></div><p id="installed-plugin-count" role="status"></p>');
  list.querySelectorAll('.plugin-card').forEach(card=>{const badges=[...card.querySelectorAll('.permission-badge')];if(badges.length){const details=document.createElement('details');details.innerHTML='<summary>Acessos permitidos</summary>';card.firstElementChild.append(details);details.append(...badges)}});
  const refresh=()=>{let count=0;list.querySelectorAll('.plugin-card').forEach(card=>{const id=card.querySelector('[data-plugin-toggle]').dataset.pluginToggle,p=vault.plugins.find(p=>p.id===id),filter=$('#installed-plugin-state').value;card.hidden=!AmagoSearch.normalize(p.name+' '+p.description).includes(AmagoSearch.normalize($('#installed-plugin-query').value))||(filter==='enabled'&&!p.enabled)||(filter==='disabled'&&p.enabled);if(!card.hidden)count++});$('#installed-plugin-count').textContent=count+' plugin(s) exibido(s)'};
- $('#installed-plugin-query').oninput=refresh;$('#installed-plugin-state').onchange=refresh;refresh();
+ $('#installed-plugin-query').value=installedFilters.plugins;$('#installed-plugin-state').value=installedFilters.pluginState;
+ $('#installed-plugin-query').oninput=()=>{installedFilters.plugins=$('#installed-plugin-query').value;refresh()};$('#installed-plugin-state').onchange=()=>{installedFilters.pluginState=$('#installed-plugin-state').value;refresh()};refresh();
 }
 function renderShortcutSettings(){
  settingsShell('shortcuts','<div class="eyebrow">TECLADO</div><h3>Atalhos de teclado</h3><p>Clique em um campo e pressione a combinação desejada. Use Ctrl (ou ⌘ no macOS) ou Alt. Esc cancela.</p><label>Encontrar uma ação<input class="field" id="keybinding-query" type="search" placeholder="Ex.: salvar, foco, buscar"></label><p id="keybinding-status" role="status"></p><div id="keybinding-list"></div><button class="plain-button" id="keybinding-reset">Restaurar atalhos padrão</button><details class="settings-advanced"><summary>Outros atalhos de navegação e edição</summary>'+writingShortcutGroups.map(([title,items])=>`<h4>${esc(title)}</h4>${items.filter(([keys])=>keys.includes('/')||keys==='Esc'||keys.includes('↑')||keys.includes('Home')).map(([keys,label])=>`<p><kbd>${esc(keys)}</kbd> ${esc(label)}</p>`).join('')}`).join('')+'</details>');
