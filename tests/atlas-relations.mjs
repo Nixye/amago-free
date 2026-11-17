@@ -43,6 +43,9 @@ const chain=[{id:'a',title:'A',body:'[[B]]'},{id:'b',title:'B',body:'#shared'},{
 for(const [depth,expected] of [[1,'a,b'],[2,'a,b,c'],[3,'a,b,c,d']]){
  assert.equal(graph(chain,{focus:'a',depth}).docs.map(d=>d.id).join(','),expected);
 }
+const longChain=Array.from({length:8},(_,i)=>({id:String(i),title:'Note'+i,body:i<7?'[[Note'+(i+1)+']]':''}));
+assert.equal(graph(longChain,{focus:'0',depth:Infinity}).docs.length,8,'Whole neighborhood extends beyond three hops');
+assert.equal(graph(longChain,{focus:'0',depth:Infinity,query:'name:Note7'}).docs.map(d=>d.id).join(','),'7','Hidden intermediary notes must not break traversal');
 // Truncate only after filtering and discovering the complete local neighborhood.
 const many=Array.from({length:501},(_,i)=>({id:'isolated-'+i,title:'Isolada '+i,body:''}));
 many.push({id:'focus',title:'Foco',body:'#rare'},{id:'neighbor',title:'Vizinha',body:'#rare'});

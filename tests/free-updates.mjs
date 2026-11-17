@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const {checkFreeRelease}=createRequire(import.meta.url)('../desktop/free-updates.cjs');
+const response=version=>async(url,options)=>{assert.equal(url,'https://api.github.com/repos/Nixye/amago-free/releases/latest');assert.equal(options.redirect,'error');assert(options.signal);return {ok:true,json:async()=>({tag_name:version,draft:false,prerelease:false,html_url:'https://attacker.invalid/'})}};
+assert.deepEqual(await checkFreeRelease('1.0.2',response('v1.1.0')),{status:'available',version:'1.1.0',url:'https://github.com/Nixye/amago-free/releases'});
+assert.equal((await checkFreeRelease('1.1.0',response('v1.1.0'))).status,'current');
+assert.equal((await checkFreeRelease('1.1.0',response('v1.0.9'))).status,'current');
+assert.equal((await checkFreeRelease('1.1.0',response('v1.2.0-beta'))).status,'error');
+assert.equal((await checkFreeRelease('1.1.0',async()=>{throw Error('Offline')})).status,'error');
+assert.equal((await checkFreeRelease('1.1.0',async()=>({ok:false}))).status,'error');
+console.log('Free updates: fixed upstream/download destination, stable versions, no downgrade notification and honest offline/HTTP failures passed.');
