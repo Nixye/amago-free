@@ -17,6 +17,7 @@ app.whenReady().then(async()=>{
    await capture(tab);
   }
   await run(`showSettings('shortcuts');const input=$('[data-keybinding="search"]');input.focus();input.dispatchEvent(new KeyboardEvent('keydown',{key:'j',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));`);
+  assert(await run(`const rows=[...document.querySelectorAll('.keybinding-row')];return rows.every(row=>row.getBoundingClientRect().height<=52)&&rows.every(row=>Math.abs(row.querySelector('input').getBoundingClientRect().right-rows[0].querySelector('input').getBoundingClientRect().right)<2)`),'Shortcut controls must be compact and aligned');
   assert.equal(await run(`return interfacePrefs().keybindings.search`),'Ctrl+Shift+J');
   await run(`const input=$('[data-keybinding="save"]');input.dispatchEvent(new KeyboardEvent('keydown',{key:'j',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));`);
   assert.match(await run(`return $('#keybinding-status').textContent`),/já está em uso/);
@@ -27,6 +28,14 @@ app.whenReady().then(async()=>{
   await run(`showSettings('reading');const field=$('[data-reading="size"]');field.value='24';field.dispatchEvent(new Event('change',{bubbles:true}));closeModal();state.mode='read';renderMain();`);
   assert.equal(await run(`return readingPreferences().size`),24);
   assert.equal(await run(`return getComputedStyle($('.note-main .markdown')).fontSize`),'24px');
+  await run(`showSettings('appearance');$('#installed-theme-query').value='quártzo';$('#installed-theme-query').dispatchEvent(new Event('input'));`);
+  assert.equal(await run(`return [...document.querySelectorAll('[data-theme-id]')].filter(b=>!b.hidden).length`),1);
+  await run(`$('[data-theme-id]:not([hidden])').click();`);
+  assert.equal(await run(`return $('#installed-theme-query').value`),'quártzo');
+  await run(`$('#installed-theme-query').value='';$('#installed-theme-query').dispatchEvent(new Event('input'));$('#theme-preference-mode').value='system';$('#theme-preference-mode').dispatchEvent(new Event('change',{bubbles:true}));`);
+  assert(await run(`return !$('.system-theme-pair').hidden&&document.querySelectorAll('[data-theme-id][aria-pressed=true]').length===1`));
+  await capture('appearance-system');
+  await run(`$('#theme-preference-mode').value='manual';$('#theme-preference-mode').dispatchEvent(new Event('change',{bubbles:true}));closeModal();`);
   await run(`state.mode='edit';render();const next=vault.notes.find(n=>n.id!==state.id);window.testSplitId=next.id;window.firstSplitId=state.id;window.originalSplitBody=note().body;const row=[...document.querySelectorAll('#sidebar [data-note]')].find(r=>r.dataset.note===next.id);showFileMenu(row,400,200);[...$('#file-context-menu').querySelectorAll('button')].find(b=>b.textContent.includes('Abrir ao lado')).click();await new Promise(r=>setTimeout(r,50));`);
   assert.equal(await run(`return studio.panes.length`),2);
   assert.equal(await run(`return studio.panes[1].id`),await run(`return window.testSplitId`));
@@ -43,6 +52,17 @@ app.whenReady().then(async()=>{
   await run(`closeModal();state.view='graph';renderMain();`);
   assert(!await run(`return !!$('#atlas-depth')`));assert(await run(`return !!$('.map-filter-panel .atlas-relations')&&!$('.map-display-options').open`));
   await capture('map');
+  assert(await run(`return $('#map-filters').hidden&&$('.universe-stage').getBoundingClientRect().height>innerHeight*.6`),'Map should occupy the workspace by default');
+  await run(`$('#map-filters-toggle').click();window.mapCameraBefore=JSON.stringify(graphPan);$('#graph-query').value='Jardim';$('#graph-query').dispatchEvent(new Event('input'));`);
+  assert(await run(`return !$('#map-filters').hidden&&$('#map-filters-toggle').getAttribute('aria-expanded')==='true'&&$('#graph-query').value==='Jardim'&&document.activeElement===$('#graph-query')`),'Filter panel and search focus must survive rendering');
+  assert(await run(`return $('#map-filters').getBoundingClientRect().left>$('.universe-stage').getBoundingClientRect().left`));
+  await capture('map-filters');
+  await run(`$('#map-filters-close').click();$('#map-filters-toggle').click();`);
+  assert.equal(await run(`return $('#graph-query').value`),'Jardim');
+  assert.equal(await run(`return JSON.stringify(graphPan)`),await run(`return window.mapCameraBefore`));
+  win.setSize(620,820);await run(`await new Promise(r=>setTimeout(r,50));`);
+  assert(await run(`return $('#map-filters').getBoundingClientRect().right<=innerWidth&&$('.universe-stage').getBoundingClientRect().width>200`),'Narrow map remains available under the filter drawer');
+  await capture('map-narrow');win.setSize(1440,1000);
   await run(`window.amagoDesktop={updates:{info:async()=>({version:window.amagoVersion,channel:'portable',automatic:false}),check:async()=>({status:'current'})},freeUpdates:async()=>({status:'current',version:window.amagoVersion})};showSettings('updates');await new Promise(r=>setTimeout(r,40));`);
   assert(await run(`return $('#setting-startup-updates').checked`));
   await run(`$('#setting-startup-updates').click();closeModal();showSettings('updates');await new Promise(r=>setTimeout(r,40));`);
