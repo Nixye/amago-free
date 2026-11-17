@@ -1,0 +1,17 @@
+.project-image.image-viewer{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-width:0;min-height:0;flex:1;padding:0;overflow:hidden}
+.project-document:has(.image-viewer)>.project-file-footer{display:none}
+.image-viewer-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:0 0 auto;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel)}
+.image-viewer-toolbar button{font-size:12px;min-width:32px}
+.image-viewer-toolbar button:disabled{opacity:.4;cursor:default}
+.image-viewer-toolbar [aria-pressed=true]{background:var(--accent-bg);color:var(--accent)}
+.image-viewer-scale{min-width:60px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
+.image-viewer-dimensions{margin-left:auto;font-size:11px;color:var(--muted)}
+.image-viewer-viewport{flex:1;min-height:100px;min-width:0;overflow:auto;overscroll-behavior:contain;touch-action:none;cursor:grab;background-color:var(--bg);background-image:linear-gradient(45deg,var(--panel) 25%,transparent 25%),linear-gradient(-45deg,var(--panel) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--panel) 75%),linear-gradient(-45deg,transparent 75%,var(--panel) 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;outline-offset:-3px}
+.image-viewer-viewport.image-panning{cursor:grabbing}
+.image-viewer-canvas{display:flex;align-items:center;justify-content:center;min-width:100%;min-height:100%}
+.image-viewer-stage{flex:none}
+.project-image.image-viewer .image-viewer-stage img{display:block;max-width:none;max-height:none;width:100%;height:100%;object-fit:fill;user-select:none;border:0;border-radius:0;box-shadow:0 3px 18px #0003}
+.image-viewer-footer{display:flex;gap:18px;justify-content:space-between;padding:10px 20px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);flex:0 0 auto}
+.image-viewer-footer span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.image-viewer-footer span:last-child{flex-shrink:0}
+@media(max-width:650px){.image-viewer-toolbar{padding:10px}.image-viewer-footer{padding:10px}.image-viewer-footer span:last-child{display:none}.image-viewer-dimensions{flex-basis:100%;margin:0}}

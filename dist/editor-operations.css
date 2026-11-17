@@ -1,0 +1,6 @@
+.markdown del,.markdown s{color:var(--muted);text-decoration-thickness:1px}
+.code-copy-button{display:block;margin:12px 0 0 auto;padding:5px 9px;border:1px solid var(--border);border-radius:6px;color:var(--muted);background:var(--raised);font:11px/1.5 var(--font)}
+.code-copy-button:hover,.code-copy-button:focus-visible{color:var(--strong);border-color:var(--accent)}
+.code-copy-button+pre{margin-top:5px}
+.clipboard-fallback{width:100%;min-height:160px;max-height:50vh;resize:vertical;white-space:pre;font-family:Consolas,monospace}
+.import-report{max-height:45vh;overflow:auto}.import-report section{padding:10px 0;border-bottom:1px solid var(--border)}.import-report p{margin:4px 0}.import-error{color:var(--purple)}

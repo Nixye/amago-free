@@ -1,0 +1,19 @@
+.atlas-cards .universe-node rect{fill:var(--panel,#151c28);stroke:var(--accent);stroke-width:1.5}.atlas-cards .universe-node circle{display:none}.atlas-cards .universe-node text{font-size:10px}.atlas-motion [data-edge]{stroke-dasharray:.12 .08;animation:atlas-flow 3s linear infinite!important}.atlas-motion .node-halo{animation:atlas-pulse 3s ease-in-out infinite!important}@keyframes atlas-flow{to{stroke-dashoffset:-1}}@keyframes atlas-pulse{50%{opacity:.8;filter:drop-shadow(0 0 6px var(--accent))}}@media(prefers-reduced-motion:reduce){.atlas-motion [data-edge],.atlas-motion .node-halo{animation:none!important}}
+
+.atlas-signals{pointer-events:none;filter:drop-shadow(0 0 4px var(--accent))}svg:not(.atlas-motion) .atlas-signals{display:none}svg:not(.atlas-motion) [data-edge],svg:not(.atlas-motion) .node-halo{animation:none!important}.atlas-motion .atlas-hub{filter:drop-shadow(0 0 9px var(--accent))}.atlas-motion.atlas-cards .universe-node rect{animation:atlas-pulse 3s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.atlas-signals{display:none}.atlas-motion.atlas-cards .universe-node rect{animation:none!important}}
+
+:root{--relation-links:#55b6ff;--relation-tags:#f2ae55;--relation-mentions:#c394ff}
+.theme-light{--relation-links:#0969da;--relation-tags:#986000;--relation-mentions:#8250df}
+.atlas-relations{display:flex;align-items:center;flex-wrap:wrap;gap:14px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:10px 0 8px;min-width:0}
+.atlas-relations legend{font-size:11px;padding:0 6px;color:var(--strong)}
+.atlas-relations label{display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer}
+.atlas-relations small{color:var(--muted);font-size:10px}
+.atlas-relations i,.relation-legend i{display:inline-block;width:18px;height:3px;border-radius:3px;flex-shrink:0}
+.relation-legend{display:flex;gap:10px 18px;flex-wrap:wrap;color:var(--muted);font-size:10px;margin:10px 0}
+.relation-legend span{display:flex;gap:6px;align-items:center}
+.relation-mixed{background:linear-gradient(90deg,var(--relation-links),var(--relation-tags),var(--relation-mentions))}
+.context-panel .relation-legend{gap:10px;font-size:9px}
+.relation-backlink{align-items:flex-start}
+.relation-backlink>span{min-width:0;overflow-wrap:anywhere}
+.relation-backlink .relation-reasons{display:block;white-space:normal;color:var(--text);font-size:10px;line-height:1.6;margin-top:5px}
+.relation-link-details>summary{cursor:pointer;color:var(--muted);font-size:11px;padding:8px 0}

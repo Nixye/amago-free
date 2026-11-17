@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const require=createRequire(import.meta.url),E=require('../dist/editor-operations-core.js');
+const body='\uFEFF---\r\ncustom: yes\r\n...\r\n# Título existente\r\n\r\nTexto  \r\n';
+assert.deepEqual(E.exportDocument({title:'Nota?',body}),{name:'Nota-.md',body,type:'text/markdown;charset=utf-8'});
+assert.deepEqual(E.exportDocument({name:'dados.json',body:'{"x":1}'},{project:true,draft:true}),{name:'dados-rascunho.json',body:'{"x":1}',type:'application/json;charset=utf-8'});
+assert.equal(E.exportDocument({name:'log.txt',body},{project:true,draft:true}).name,'log-rascunho.txt');
+assert.equal(E.prepareImport('nota.md',body)[0].body,body);
+const backup={format:'amago-v1',notes:[{title:'A',body:'# A'},{title:'A',body:'segundo'}]};
+assert.deepEqual(E.prepareImport('backup.json',JSON.stringify(backup),['A']).map(n=>n.title),['A (importada)','A (importada 2)']);
+assert.throws(()=>E.prepareImport('backup.json',JSON.stringify({...backup,notes:[backup.notes[0],{title:'inválida'}]})),/Nota 2/);
+assert.throws(()=>E.prepareImport('backup.json','{'),/JSON inválido/);
+assert.throws(()=>E.prepareImport('backup.json','{"notes":[]}'),/backup/);
+assert.throws(()=>E.prepareImport('script.html','x'),/Formato/);
+assert.throws(()=>E.prepareImport('nota.md','x'.repeat(5*1024*1024+1)),/5 MiB/);
+
+let result=E.indent('um\ndois\ntrês',0,8);assert.equal(result.body,'  um\n  dois\ntrês');assert.equal(result.start,0);assert.equal(result.end,12);
+result=E.indent(result.body,result.start,result.end,true);assert.equal(result.body,'um\ndois\ntrês');assert.equal(result.end,8);
+assert.equal(E.indent('  a\r\n\tb\r\nc',0,9,true).body,'a\r\nb\r\nc');
+assert.deepEqual(E.indent('abc',1,1),{body:'a  bc',start:3,end:3});
+assert.deepEqual(E.indent('  abc',3,3,true),{body:'abc',start:1,end:1});
+assert.equal(E.indent('\nx',0,0,true).body,'\nx');
+assert.equal(E.continueList('9. item',7,7).body,'9. item\n10. ');
+assert.equal(E.continueList('  - [X] item',12,12).body,'  - [X] item\n  - [ ] ');
+assert.equal(E.continueList('- [ ] ',6,6).body,'');
+assert.equal(E.continueList('- item\r\n- último',16,16).body,'- item\r\n- último\r\n- ');
+assert.equal(E.continueList('```\n- exemplo',13,13),null);
+assert.equal(E.continueList('---\n- yaml\n---',10,10),null);
+assert.equal(E.continueList('normal',6,6),null);
+
+result=E.toggleFormat('texto',0,5,'bold');assert.deepEqual(result,{body:'**texto**',start:2,end:7});
+result=E.toggleFormat(result.body,result.start,result.end,'bold');assert.deepEqual(result,{body:'texto',start:0,end:5});
+assert.deepEqual(E.toggleFormat('~~texto~~',0,9,'strike'),{body:'texto',start:0,end:5});
+assert.equal(E.toggleFormat('',0,0,'italic').body,'*texto*');
+const task='\uFEFF---\r\nx: y\r\n---\r\n- [ ] **Tarefa**  \r\n';
+assert.equal(E.toggleTask(task,3,true),task.replace('[ ]','[x]'));
+assert.equal(E.toggleTask('1. [x] Feita',0,false),'1. [ ] Feita');
+assert.equal(E.toggleTask('texto',0,true),null);
+
+const source=readFileSync(new URL('../dist/app.js',import.meta.url),'utf8'),context=vm.createContext({localStorage:{getItem:()=>null},document:{querySelector:()=>({})},crypto:globalThis.crypto});
+vm.runInContext(source.slice(0,source.indexOf("document.addEventListener('click'")),context);
+assert.equal(context.inline('~~**feito**~~'),'<del><strong>feito</strong></del>');
+assert.equal(context.inline('\\~\\~literal\\~\\~'),'~~literal~~');
+assert.equal(context.inline('`~~código~~`'),'<code>~~código~~</code>');
+assert.match(context.markdown('+ [ ] Tarefa'),/data-md-task-line="0"/);
+console.log('Editor operations: exact exports, atomic import plans, line indentation, smart lists, toggle shortcuts, task markers and strikethrough passed.');

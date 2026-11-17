@@ -1,0 +1,61 @@
+/* A document-first surface, using the selected theme's existing colors. */
+.focus-toolbar[hidden]{display:none!important}
+.focus-toolbar{display:none}
+.focus-mode .focus-toolbar{display:flex;align-items:center;gap:18px;flex:0 0 auto;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg);z-index:7;flex-wrap:wrap}
+.focus-document-name{flex:1;min-width:120px;max-width:34%;display:grid;gap:5px}
+.focus-eyebrow{font-size:9px;letter-spacing:1.8px;color:var(--accent)}
+.focus-document-name strong{font-weight:500;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:var(--strong)}
+.focus-modes{display:flex;gap:3px;padding:4px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}
+.focus-modes button{font-size:12px;border-radius:6px;padding:8px 12px;color:var(--muted)}
+.focus-modes button[aria-pressed=true]{color:var(--strong);background:var(--accent-bg)}
+.focus-utilities{display:flex;align-items:center;gap:8px;margin-left:auto}
+.focus-utilities .plain-button{padding:8px;font-size:11px}
+.focus-width-choice{max-width:135px;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;color-scheme:dark}
+.theme-light .focus-width-choice{color-scheme:light}
+.focus-exit{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;color:var(--strong)}
+.focus-exit:hover{background:var(--hover)}
+.focus-exit .icon{width:15px;height:15px}
+.focus-exit kbd{margin-left:6px}
+.focus-status{flex-basis:100%;text-align:right;color:var(--muted);font-size:10px;line-height:1.3}
+.focus-status.has-unsaved{color:var(--accent)}
+.focus-mode{--focus-width:820px;background:var(--bg)!important}
+.focus-mode[data-focus-width=wide]{--focus-width:1440px}
+.focus-mode[data-focus-width=full]{--focus-width:100%}
+.focus-mode[data-focus-width=full] .document,.focus-mode[data-focus-width=full] .project-preview,.focus-mode[data-focus-width=full] .project-editor-grid textarea{padding-left:clamp(22px,3vw,56px);padding-right:clamp(22px,3vw,56px)}
+.focus-mode .workspace{background:var(--bg)!important;width:100%;min-width:0}
+.focus-mode .workspace:after{display:none!important}
+.focus-mode .sidebar,.focus-mode .topbar,.focus-mode .tabbar,.focus-mode .statusbar,.focus-mode .context-panel,.focus-mode #sidebar-reveal,.focus-mode .floating-focus{display:none!important}
+.focus-fullscreen .window-titlebar{display:none}
+.desktop-shell.focus-fullscreen .app{height:100dvh;margin-top:0}
+.desktop-shell.focus-fullscreen .modal-backdrop{top:0}
+.focus-mode #main{min-height:0;flex:1;overflow:hidden}
+.focus-mode .note-main,.focus-mode .project-document,.focus-mode .split-workspace{width:100%;flex:1;min-width:0;background:var(--bg)}
+.focus-mode .document-toolbar,.focus-mode .project-document-toolbar,.focus-mode .project-file-footer,.focus-mode .project-metadata-bar,.focus-mode .document-hint,.focus-mode .callout,.focus-mode .note-meta,.focus-mode .document>.eyebrow,.focus-mode .split-workspace-heading{display:none!important}
+.focus-mode .document{max-width:var(--focus-width);width:100%;margin:0 auto;padding:42px clamp(22px,5vw,72px) 100px}
+.focus-mode .document.split{max-width:100%}
+.focus-mode .title-input{font-size:clamp(26px,3vw,40px);line-height:1.3;margin-bottom:30px}
+.focus-mode .markdown,.focus-mode .markdown>p:first-child,.focus-mode .editor,.focus-mode #project-editor,.focus-mode [data-pane-editor]{font-size:var(--focus-font-size,18px);line-height:1.85;color:var(--text)}
+.focus-mode .markdown{overflow-wrap:anywhere}
+.focus-mode .editor{min-height:60vh;background:transparent}
+.focus-mode .project-editor-grid{width:100%;min-height:0;flex:1;margin:0 auto;max-width:var(--focus-width)}
+.focus-mode .project-editor-grid.split{max-width:100%}
+.focus-mode .project-editor-grid.edit{display:grid;grid-template-columns:minmax(0,1fr)}
+.focus-mode .document-metadata{display:none!important}
+.focus-mode .project-editor-grid>.format-toolbar{margin:0}
+.focus-mode .project-editor-grid textarea{flex:1;resize:none;padding:38px clamp(22px,4vw,60px);background:transparent}
+.focus-mode .project-preview{padding:38px clamp(22px,4vw,60px) 90px}
+.focus-mode .visual-toolbar{padding:10px 0 20px;font-size:11px;gap:10px}
+.focus-reading .visual-toolbar{display:none}
+.focus-mode .visual-block:focus{padding-left:0;box-shadow:none;outline:1px solid var(--border);outline-offset:8px}
+.focus-mode .project-image{flex:1;min-height:0;overflow:auto;padding:24px}
+.focus-mode .project-image img{max-height:calc(100dvh - 180px);object-fit:contain}
+.focus-mode .project-image p{color:var(--muted)}
+.focus-mode .editing-columns{display:flex;min-width:0;flex:1;width:100%;overflow:hidden}
+.focus-multiple .editing-pane:not(.focus-active-pane){display:none}
+.focus-multiple .editing-pane.focus-active-pane{flex:1 1 100%!important;max-width:var(--focus-width);margin:0 auto;border:0;min-width:0}
+.focus-multiple .editing-pane>header,.focus-multiple .editing-pane>footer,.focus-multiple .resize-columns{display:none}
+.focus-multiple .editing-pane textarea,.focus-multiple .pane-preview{padding:36px clamp(22px,4vw,60px) 90px}
+.focus-mode .markdown pre{font-size:.85em;overflow:auto}
+.focus-mode .format-toolbar{gap:8px;margin-bottom:20px}
+@media(max-width:900px){.focus-mode .focus-toolbar{padding:12px 16px;gap:10px;display:grid;grid-template-columns:minmax(110px,1fr) auto}.focus-document-name{max-width:100%;grid-column:1;grid-row:1}.focus-utilities{grid-column:2;grid-row:1}.focus-modes{grid-column:1;grid-row:2;justify-content:flex-start;width:max-content;max-width:100%}.focus-modes button{white-space:nowrap}.focus-status{grid-column:2;grid-row:2;text-align:right}.focus-utilities .plain-button{font-size:10px;padding:6px}.focus-mode .document{padding-top:28px}.focus-exit kbd{display:none}}
+@media(max-width:600px){.focus-mode .focus-toolbar{grid-template-columns:1fr}.focus-document-name{grid-column:1;grid-row:1}.focus-utilities{grid-column:1;grid-row:2;width:100%;justify-content:flex-start;flex-wrap:wrap;margin:0}.focus-modes{grid-column:1;grid-row:3}.focus-status{grid-column:1;grid-row:4;text-align:left}.focus-mode .split-content{grid-template-columns:1fr}.focus-mode .project-editor-grid.split{grid-template-columns:1fr}.focus-mode .project-editor-grid.split #project-editor{min-height:35vh}.focus-mode .resize-editor{display:none}}

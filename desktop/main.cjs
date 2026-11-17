@@ -1,0 +1,63 @@
+const {app,BrowserWindow,protocol,net,ipcMain,shell,Menu,nativeTheme}=require('electron');
+const {supportsAcrylic}=require('./appearance.cjs');
+const {Workspace}=require('./workspace.cjs');
+const {operations}=require('./project-operations.cjs');
+const {RecentProjects}=require('./projects.cjs');
+const acrylicSupported=supportsAcrylic(process.platform,require('node:os').release());
+const path=require('node:path');
+const fs=require('node:fs/promises');
+app.setPath('userData',path.join(app.getPath('appData'),'amago-free'));
+app.setAppUserModelId('app.amago.free');
+const {pathToFileURL}=require('node:url');
+protocol.registerSchemesAsPrivileged([{scheme:'amago',privileges:{standard:true,secure:true,supportFetchAPI:true}}]);
+let win,chain=Promise.resolve();
+if(!app.requestSingleInstanceLock()){app.quit()}else{
+app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.focus()}});
+app.whenReady().then(async()=>{
+const root=path.join(__dirname,'../dist');
+protocol.handle('amago',request=>{const url=new URL(request.url);if(url.host!=='app')return new Response('',{status:403});const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!file.startsWith(root+path.sep))return new Response('',{status:403});return net.fetch(pathToFileURL(file).href)});
+const dataDir=app.getPath('userData'),file=path.join(dataDir,'vault.json');
+const trusted=event=>event.senderFrame===win?.webContents.mainFrame&&event.senderFrame?.url.startsWith('amago://app/');
+let project=null;const recents=new RecentProjects(path.join(dataDir,'projects.json'));
+const connectProject=async root=>{const candidate=await Workspace.open(root),tree=await candidate.tree(),recent=await recents.remember(candidate.root);candidate.operations=operations(candidate);project=candidate;return {...tree,recentId:recent.id}};
+ipcMain.handle('project:recent',async event=>{if(!trusted(event))throw Error('Invalid origin');try{return {projects:await recents.list()}}catch(e){return {error:e.message}}});
+ipcMain.handle('project:reopen',async(event,id)=>{if(!trusted(event))throw Error('Invalid origin');try{return await connectProject(await recents.pathFor(id))}catch(e){return {error:'Não foi possível abrir este projeto. Verifique se a pasta ainda existe e se está acessível. '+e.message}}});
+ipcMain.handle('project:forget',async(event,id)=>{if(!trusted(event))throw Error('Invalid origin');try{return await recents.forget(id)}catch(e){return {error:e.message}}});
+const projectCall=handler=>async(event,...args)=>{if(!trusted(event))throw Error('Invalid origin');try{if(!project)throw Error('Abra uma pasta primeiro.');return await handler(project,...args)}catch(e){return {error:e.message}}};
+ipcMain.handle('project:open',async event=>{if(!trusted(event))throw Error('Invalid origin');try{const selected=await require('electron').dialog.showOpenDialog(win,{title:'Abrir pasta como projeto',properties:['openDirectory']});if(selected.canceled)return {canceled:true};return await connectProject(selected.filePaths[0])}catch(e){return {error:e.message}}});
+ipcMain.handle('project:create-root',async(event,name,template)=>{if(!trusted(event))throw Error('Invalid origin');try{require('../dist/project-creation.js').name(name);const selected=await require('electron').dialog.showOpenDialog(win,{title:'Onde criar o novo projeto?',properties:['openDirectory']});if(selected.canceled)return {canceled:true};return await connectProject(await require('./project-creation.cjs').createProject(selected.filePaths[0],name,template))}catch(e){return {error:e.code==='EEXIST'?'Já existe uma pasta com esse nome. Escolha outro nome.':e.message}}});
+ipcMain.handle('project:export-manifest',projectCall(p=>require('./project-export.cjs').manifest(p)));
+ipcMain.handle('project:export-file',projectCall((p,relative)=>require('./project-export.cjs').read(p,relative)));
+ipcMain.handle('project:tree',projectCall(p=>p.tree()));
+ipcMain.handle('project:read',projectCall((p,relative)=>p.read(relative)));
+ipcMain.handle('project:image',projectCall((p,relative)=>p.image(relative)));
+ipcMain.handle('project:save',projectCall((p,relative,body,version)=>p.save(relative,body,version)));
+ipcMain.handle('project:preview-operation',projectCall((p,args)=>p.operations.preview(args)));
+ipcMain.handle('project:apply-operation',projectCall((p,id)=>p.operations.apply(id)));
+let gitBusy=false;
+ipcMain.handle('git:run',async(event,operation,value)=>{if(!trusted(event))throw Error('Invalid origin');if(gitBusy)return {error:'Uma operação Git está em andamento.'};gitBusy=true;try{const git=require('./git.cjs');if(operation==='clone'){const selected=await require('electron').dialog.showOpenDialog(win,{title:'Escolha a pasta que receberá o repositório',properties:['openDirectory']});if(selected.canceled)return {canceled:true};return {project:await connectProject(await git.clone(value.url,selected.filePaths[0],value.name))}}if(!project)throw Error('Abra um projeto Git primeiro.');return await git.operate(project.root,operation,value)}catch(e){return {error:e.message}}finally{gitBusy=false}});
+ipcMain.handle('project:create',projectCall((p,relative,kind)=>p.create(relative,kind)));
+ipcMain.handle('vault:load',async event=>{if(!trusted(event))throw Error('Invalid origin');try{return {data:JSON.parse(await fs.readFile(file,'utf8'))}}catch(e){if(e.code==='ENOENT')return {data:null};return {error:'O arquivo local não pôde ser lido. Seus arquivos foram preservados.'}}});
+ipcMain.handle('vault:save',async(event,data)=>{if(!trusted(event)||typeof data!=='string'||data.length>20000000)throw Error('Invalid vault');const parsed=JSON.parse(data);if(!Array.isArray(parsed.notes)||!Array.isArray(parsed.folders))throw Error('Invalid format');
+const job=chain.catch(()=>{}).then(async()=>{await fs.mkdir(dataDir,{recursive:true});const backups=path.join(dataDir,'backups');await fs.mkdir(backups,{recursive:true});const daily=path.join(backups,new Date().toISOString().slice(0,10)+'.json');try{await fs.copyFile(file,daily,require('node:fs').constants.COPYFILE_EXCL)}catch(e){if(!['EEXIST','ENOENT'].includes(e.code))throw e}await fs.writeFile(file+'.tmp',data,'utf8');await fs.rename(file+'.tmp',file);return {saved:true}});chain=job;return job;
+});
+ipcMain.handle('vault:folder',event=>{if(!trusted(event))throw Error('Invalid origin');return shell.openPath(dataDir)});
+Menu.setApplicationMenu(null);
+nativeTheme.themeSource='dark';
+win=new BrowserWindow({icon:path.join(__dirname,'icon.ico'),width:1440,height:940,minWidth:740,minHeight:560,frame:false,transparent:false,backgroundMaterial:acrylicSupported?'acrylic':'none',backgroundColor:acrylicSupported?'#00000000':'#090e19',title:'Âmago Free',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false}});
+// Use the native DWM acrylic material without a layered transparent window,
+// so Windows retains caption double-click, resizing and snap behavior.
+ipcMain.handle('appearance:set',(event,value)=>{if(!trusted(event)||typeof value?.enabled!=='boolean'||!['light','dark'].includes(value.theme))throw Error('Invalid appearance');if(value.followSystem!==undefined&&typeof value.followSystem!=='boolean')throw Error('Invalid system theme');if(value.followSystem!==undefined)nativeTheme.themeSource=value.followSystem?'system':value.theme;else if(nativeTheme.themeSource!=='system')nativeTheme.themeSource=value.theme;const enabled=acrylicSupported&&value.enabled;try{if(acrylicSupported)win.setBackgroundMaterial(enabled?'acrylic':'none');win.setBackgroundColor(enabled?'#00000000':value.theme==='light'?'#f0f5fb':'#090e19');return {supported:acrylicSupported,enabled}}catch{win.setBackgroundColor(value.theme==='light'?'#f0f5fb':'#090e19');return {supported:false,enabled:false}}});
+ipcMain.handle('window:control',(event,command)=>{if(!trusted(event)||!['minimize','maximize','close'].includes(command))throw Error('Invalid window command');if(command==='minimize')win.minimize();if(command==='maximize'){win.isMaximized()?win.unmaximize():win.maximize()}if(command==='close')win.close()});
+ipcMain.handle('window:fullscreen',(event,value)=>{if(!trusted(event)||(value!==undefined&&typeof value!=='boolean'))throw Error('Invalid fullscreen request');if(value!==undefined)win.setFullScreen(value);return {fullscreen:value===undefined?win.isFullScreen():value}});
+win.on('enter-full-screen',()=>win.webContents.send('window:fullscreen-changed',true));
+win.on('leave-full-screen',()=>win.webContents.send('window:fullscreen-changed',false));
+win.webContents.session.setPermissionRequestHandler((_wc,_p,callback)=>callback(false));
+win.webContents.setWindowOpenHandler(({url})=>{if(/^https?:\/\//.test(url))shell.openExternal(url);return {action:'deny'}});
+win.webContents.on('will-navigate',(e,url)=>{if(!url.startsWith('amago://app/'))e.preventDefault()});
+win.on('close',event=>{event.preventDefault();win.webContents.executeJavaScript('window.amagoFlush ? window.amagoFlush() : Promise.resolve()').then(()=>win.destroy()).catch(()=>{require('electron').dialog.showErrorBox('Não foi possível salvar','Há alterações que não puderam ser salvas. Verifique o arquivo aberto e exporte um rascunho se necessário. A janela permanecerá aberta.');quitting=false})});
+await win.loadURL('amago://app/');win.show();
+});
+let quitting=false;app.on('before-quit',e=>{if(!quitting){e.preventDefault();quitting=true;chain.finally(()=>app.quit())}});
+app.on('window-all-closed',()=>app.quit());
+}

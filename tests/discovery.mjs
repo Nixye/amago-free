@@ -1,0 +1,14 @@
+import vm from 'node:vm';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
+const context=vm.createContext({});for(const name of ['link-core','search-core'])vm.runInContext(readFileSync(new URL('../dist/'+name+'.js',import.meta.url),'utf8'),context);
+const {AmagoSearch:S}=context;
+const doc={title:'Atlas de ideias',path:'Projetos/Atlas.md',updated:'2026-11-12T12:00:00Z',tags:['pessoal'],body:'---\ntags: [design, projeto]\ncolor: "#aabbcc"\ndate: 2026-10-20\n---\nPesquisa visual com @luna. [[Outra nota]] #inspiração\n```\n#ignorar @oculto [[código]]\n```'};
+assert.ok(S.matches(doc,'atlas visual #design @luna after:2026-10-01 before:2026-10-31'));assert.ok(S.matches(doc,'tag:pessoal mention:"Outra nota" date:2026-10'));assert.ok(S.matches(doc,'#inspiracao -tag:inexistente'));assert.ok(S.matches(doc,'path:Projetos content:"Pesquisa visual"'));assert.ok(!S.matches(doc,'#design @alguem'));assert.ok(!S.matches(doc,'#ignorar'));assert.ok(!S.matches(doc,'after:2026-11-01'));assert.equal(S.metadata(doc.body).color,'#aabbcc');
+assert.equal(S.metadata(S.withColor(doc.body,'#123456')).color,'#123456');assert.ok(S.withColor(doc.body,'#123456').includes('tags: [design, projeto]'));assert.ok(S.withColor('Texto','#123456').endsWith('Texto'));assert.equal(S.metadata('---\ncolor: "url(https://example.com)"\n---\n').color,null);assert.equal(S.metadata('---\ntags:\n  - projeto\n  - ideia\n---\n').tags.join(','),'projeto,ideia');
+const discoverySource=readFileSync(new URL('../dist/discovery.js',import.meta.url),'utf8');vm.runInContext(discoverySource.slice(discoverySource.indexOf('function resolveLink'),discoverySource.indexOf('function graphData')),context);
+const resolve=context.resolveLink;
+assert.equal(resolve([{id:'a',title:'First'},{id:'b',title:'Second'}],{id:'a'},'Second').id,'b');
+assert.equal(resolve([{path:'A/Note.md',title:'Note'},{path:'B/Note.md',title:'Note'}],{path:'B/Other.md'},'Note').path,'B/Note.md');
+console.log('Discovery: combined text/tags/mentions/dates, exclusions, quoted tokens, frontmatter, code exclusion, color preservation passed.');
+
+assert.equal(resolve([{path:'Destino.md',title:'Destino',body:'---\naliases: [Entrada]\n---'}],{path:'Notas/Origem.md'},'../Destino.md#Seção').path,'Destino.md');
+assert.equal(resolve([{path:'Destino.md',title:'Destino',body:'---\naliases: [Entrada]\n---'}],{path:'Notas/Origem.md'},'Entrada').path,'Destino.md');

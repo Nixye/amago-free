@@ -1,0 +1,41 @@
+/* One workspace, one navigation row, one explorer search. */
+.workbench-sidebar.sidebar-minimal{padding:0}
+.sidebar-minimal.workbench-sidebar .brand{padding:20px 16px 16px;margin:0 39px 0 0;font-size:23px}
+.sidebar-minimal .brand-logo{width:28px;height:28px}
+.sidebar-minimal .workspace-picker{width:calc(100% - 24px);margin:0 12px 12px;padding:11px 12px;border-radius:9px;background:var(--panel);border:1px solid var(--border)}
+.sidebar-minimal .workspace-picker small{font-size:8px;letter-spacing:1px}
+.sidebar-minimal .workspace-picker strong{font-size:12px}
+.sidebar-minimal .workspace-shortcuts{margin:0 12px 14px;gap:4px;display:flex}
+.sidebar-minimal .workspace-shortcuts button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 6px;border:0;border-radius:7px;background:transparent;font-size:11px;color:var(--muted)}
+.sidebar-minimal .workspace-shortcuts button:hover{background:var(--hover);color:var(--strong)}
+.sidebar-minimal .workspace-shortcuts button.active{background:var(--accent-bg);color:var(--accent)}
+.sidebar-minimal .workspace-shortcuts .icon{width:15px;height:15px}
+.sidebar-minimal .sidebar-tabs{margin:0 12px;padding:0;border-bottom:1px solid var(--border);gap:12px;background:transparent}
+.sidebar-minimal .sidebar-tabs button{padding:9px 2px;border-radius:0;border-bottom:2px solid transparent;background:transparent;justify-content:flex-start;flex:0 1 auto}
+.sidebar-minimal .sidebar-tabs button.active{border-bottom-color:var(--accent);color:var(--strong);background:transparent}
+.sidebar-minimal .sidebar-tabs .icon{display:none}
+.sidebar-minimal .sidebar-content{padding:10px 12px;overflow-y:auto;min-height:0}
+.sidebar-minimal .workspace-tree-filter{position:relative;display:flex;align-items:center;gap:4px;margin:0 0 12px;padding:0;border:0}
+.sidebar-minimal .workspace-tree-filter>label{flex:1;min-width:0}
+.sidebar-minimal .workspace-tree-filter input{width:100%;height:34px;padding:7px 30px 7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel);font-size:11px}
+.sidebar-minimal .workspace-tree-filter input::-webkit-search-cancel-button{appearance:none}
+.sidebar-minimal .workspace-tree-filter>button{position:absolute;right:37px;top:3px;width:28px;height:28px;padding:0;border:0;background:transparent}
+.sidebar-minimal .workspace-tree-filter>button:disabled{visibility:hidden}
+.explorer-options{flex:0 0 30px}
+.explorer-options>summary{display:flex;align-items:center;justify-content:center;width:30px;height:32px;border-radius:6px;cursor:pointer;color:var(--muted);list-style:none}
+.explorer-options>summary::-webkit-details-marker{display:none}
+.explorer-options>summary:hover,.explorer-options[open]>summary{background:var(--hover);color:var(--strong)}
+.explorer-options>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.explorer-options-panel{position:absolute;right:0;top:40px;z-index:30;width:230px;max-width:100%;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);box-shadow:0 12px 32px #0005}
+.sidebar-minimal .explorer-options .explorer-sort{display:grid;gap:7px;padding:0 0 10px;margin:0 0 6px;border-bottom:1px solid var(--border)}
+.sidebar-minimal .explorer-sort select{width:100%;max-width:100%;padding:7px;background:var(--bg);color:var(--text)}
+.explorer-secondary-actions{display:grid;gap:3px}
+.explorer-secondary-actions .icon-button{display:flex;width:100%;height:auto;gap:9px;padding:8px;justify-content:flex-start;font-size:11px;color:var(--text)}
+.sidebar-minimal .workspace-footer{padding:12px;border-top:1px solid var(--border)}
+.sidebar-minimal .workspace-footer .new-note{padding:10px 12px;border-radius:7px;font-size:11px}
+.sidebar-minimal .workspace-footer-tools{margin-top:7px}
+.sidebar-minimal .workspace-footer-tools button{font-size:10px}
+.universe-toolbar select,.explorer-options select{color-scheme:dark}
+.theme-light .universe-toolbar select,.theme-light .explorer-options select{color-scheme:light}
+.universe-toolbar option,.explorer-options option{background:var(--panel);color:var(--text)}
+#atlas-relation{min-width:185px}

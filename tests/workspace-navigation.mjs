@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),N=require('../dist/document-navigation-core.js'),L=require('../dist/link-core.js');
+assert.deepEqual(N.orderTabs(['a','b','c'],['c','missing','a','c']),['c','a','b']);
+assert.deepEqual(N.orderTabs(['a','b'],[]),['a','b']);
+const tree=[{name:'Notas',path:'Notas',kind:'directory',children:[{name:'Sub',path:'Notas/Sub',kind:'directory',children:[{name:'Árvore.md',path:'Notas/Sub/Árvore.md',kind:'markdown'},{name:'Outro.md',path:'Notas/Sub/Outro.md',kind:'markdown'}]}]},{name:'Nada.txt',path:'Nada.txt',kind:'text'}];
+const before=JSON.stringify(tree),filtered=N.filterTree(tree,'sub arvore');assert.equal(filtered[0].children[0].children.length,1);assert.equal(filtered[0].children[0].children[0].name,'Árvore.md');assert.equal(JSON.stringify(tree),before);assert.equal(N.filterTree(tree,'notas')[0].children[0].children.length,2);assert.deepEqual(N.filterTree(tree,'ausente'),[]);assert.equal(N.filterTree(tree,''),tree);
+const source={path:'Outra/Origem.md'},target={path:'Notas/A # B | C.md',title:'A # B | C'};const link=N.referenceText(target.path,true);assert.equal(L.resolve([target],source,link.slice(2,-2)),target);assert.equal(N.referenceText(target.path),target.path);
+const yaml='---\r\n# hidden\r\n...\r\n##### Deep\r\n###### Deeper';const headings=N.headings(yaml);assert.deepEqual(headings.map(h=>h.level),[5,6]);assert.equal(yaml.slice(headings[0].start,headings[0].end),'##### Deep');
+console.log('Workspace navigation: pinned order, ancestor-preserving filters, immutable trees, resolvable references and YAML ... headings passed.');

@@ -1,0 +1,12 @@
+import {createRequire} from 'node:module';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url),asar=require('@electron/asar');
+const pkg=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url)));
+const archive=new URL('../release/win-unpacked/resources/app.asar',import.meta.url);
+const files=asar.listPackage(archive.pathname.replace(/^\/(\w:)/,'$1'));
+for(const f of files)assert(!/(?:community|marketplace|plugin-|extension-core|cloud\.js|auto-updates|electron-updater)/i.test(f),f);
+const shipped=JSON.parse(asar.extractFile(archive.pathname.replace(/^\/(\w:)/,'$1'),'package.json'));
+assert.equal(shipped.name,'amago-free');assert.equal(shipped.version,pkg.version);
+for(const kind of ['Setup','Portable'])assert(fs.statSync(new URL(`../release/Amago-Free-${pkg.version}-${kind}-x64.exe`,import.meta.url)).size>50_000_000);
+console.log('Free artifacts: installer, portable, version and exclusion of official services verified.');
