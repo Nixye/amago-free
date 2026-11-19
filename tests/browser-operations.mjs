@@ -8,3 +8,25 @@ for(const name of ['file-core','link-core','search-core','refactor-core','projec
 const adapter=ctx.window.projectAdapter;assert.equal((await adapter.open()).name,'Browser project');let p=await adapter.previewOperation({action:'rename',path:'Notas',name:'Pesquisa'});assert.equal(p.referenceCount,1);const result=await adapter.applyOperation(p.id);assert(result.done,JSON.stringify(result));assert(!root.children.has('Notas'));assert(root.children.has('Pesquisa'));assert.equal((await adapter.read('Leitor.md')).body,'[[/Pesquisa/Destino.md]]');const changed=await root.getDirectoryHandle('Pesquisa');assert(changed.children.has('Vazia'));assert.equal(new TextDecoder().decode((await changed.getFileHandle('Imagem.png')).bytes),'binary bytes');
 p=await adapter.previewOperation({action:'remove',path:'Pesquisa'});assert.equal(p.files.length,2);assert.equal(p.references.length,1);assert((await adapter.applyOperation(p.id)).done);assert(!root.children.has('Pesquisa'));const backup=await (await root.getDirectoryHandle('.amago')).getDirectoryHandle('operations');assert.equal(backup.children.size,2);
 console.log('Browser operations: directory handles, folder rename, link repair, empty folders, binary preservation and recoverable removal passed.');
+
+const discard=await root.getDirectoryHandle('Descartar',{create:true});
+discard.children.set('Rascunho.md',new FileHandle('Rascunho.md','# teste'));
+const preview=await adapter.previewOperation({action:'purge',path:'Descartar'});
+assert(!preview.error,preview.error);const purged=await adapter.applyOperation(preview.id);
+assert(purged.done);assert(!root.children.has('Descartar'));
+assert(!(await (await root.getDirectoryHandle('.amago')).getDirectoryHandle('operations')).children.has(preview.id));
+
+const rows=await adapter.listTrash();assert.equal(rows.length,1);assert.equal(rows[0].path,'Pesquisa');
+const collision=await root.getDirectoryHandle('Pesquisa',{create:true});
+assert.match((await adapter.trashAction(rows[0].id,'restore')).error,/Já existe/);
+root.children.delete(collision.name);
+assert((await adapter.trashAction(rows[0].id,'restore')).done);
+assert.equal((await adapter.listTrash()).length,0);
+const restoredFolder=await root.getDirectoryHandle('Pesquisa');
+assert(restoredFolder.children.has('Vazia'));
+assert.equal(new TextDecoder().decode((await restoredFolder.getFileHandle('Imagem.png')).bytes),'binary bytes');
+const trashAgain=await adapter.previewOperation({action:'remove',path:'Pesquisa'});
+assert((await adapter.applyOperation(trashAgain.id)).done);
+assert((await adapter.trashAction(trashAgain.id,'purge')).done);
+assert.equal((await adapter.listTrash()).length,0);assert(!backup.children.has(trashAgain.id));
+console.log('Project trash: browser restore, path conflict, binary/empty subfolder recovery and purge passed.');

@@ -19,6 +19,7 @@ let data=graph(docs);
 assert.equal(data.docs.length,4);
 assert.deepEqual(pairs(data),['a:b','a:c','b:c']);
 const combined=data.edges.find(e=>e.a==='a'&&e.b==='b');
+assert.equal(combined.direction,'both');assert.equal(data.edges.find(edge=>edge.a==='a'&&edge.b==='c').direction,'none');
 assert.equal(combined.types.join(','),'links,tags,mentions');
 assert.equal(combined.tags.length,1,'Normalize and deduplicate frontmatter, inline and stored tags');
 assert.equal(combined.mentions.length,1);
@@ -38,7 +39,7 @@ assert.equal(graph(docs,{query:'name:Alpha',linked:true}).total,0,'Only connecti
 assert.equal(graph(docs,{focus:'missing'}).total,0);
 assert.equal(graph(docs,{focus:'a',relation:'links'}).docs.map(d=>d.id).join(','),'a,b');
 const reversed=graph([{id:'target',title:'Target',body:''},{id:'source',title:'Source',body:'[[Target]]'}],{relation:'links'}).edges[0];
-assert.equal(reversed.a,'source');assert.equal(reversed.b,'target','Flow layout keeps the original link direction');
+assert.equal(reversed.direction,'forward');assert.equal(reversed.a,'source');assert.equal(reversed.b,'target','Flow layout keeps the original link direction');
 const chain=[{id:'a',title:'A',body:'[[B]]'},{id:'b',title:'B',body:'#shared'},{id:'c',title:'C',body:'#shared @person'},{id:'d',title:'D',body:'@person'}];
 for(const [depth,expected] of [[1,'a,b'],[2,'a,b,c'],[3,'a,b,c,d']]){
  assert.equal(graph(chain,{focus:'a',depth}).docs.map(d=>d.id).join(','),expected);
@@ -53,6 +54,7 @@ assert.equal(graph(many).docs.length,500);assert.equal(graph(many).total,503);
 assert.equal(graph(many,{linked:true}).docs.map(d=>d.id).join(','),'focus,neighbor');
 assert.equal(graph(many,{focus:'focus'}).docs.map(d=>d.id).join(','),'focus,neighbor');
 const dense=Array.from({length:501},(_,i)=>({id:String(i),body:'#dense'}));
+const compact=graph(dense,{limit:Infinity,compact:true});assert.equal(compact.docs.length,501);assert.equal(compact.edges.length,500);assert(compact.compacted);
 data=graph(dense,{focus:'500',limit:4});
 assert.equal(data.total,501);assert.equal(data.docs[0].id,'500');assert.equal(data.edges.length,6);
 assert.equal(new Set(pairs(data)).size,data.edges.length);

@@ -1,7 +1,7 @@
 'use strict';
 
 // Focus keeps the existing document/editor alive, including unsaved project drafts.
-const documentFocus={active:false,fullscreen:false,ownsFullscreen:false,busy:false,returnFocus:null,textRead:false,exitRequested:false,editability:new Map()};
+const documentFocus={active:false,fullscreen:false,ownsFullscreen:false,busy:false,returnFocus:null,textRead:false,exitRequested:false};
 function focusDocument(){
  if(multiActive())return paneDocument(studio.panes[studio.active]);
  if(workbench.source==='project')return state.view==='project'?workbench.file:null;
@@ -9,7 +9,7 @@ function focusDocument(){
 }
 function focusPreferences(){
  const prefs=interfacePrefs();prefs.focus??={};
- return {size:Math.max(14,Math.min(24,Number(prefs.focus.size)||18)),width:['comfortable','wide','full'].includes(prefs.focus.width)?prefs.focus.width:'full'};
+ return {size:Math.max(10,Math.min(48,Number(prefs.focus.size)||18)),width:['comfortable','wide','full'].includes(prefs.focus.width)?prefs.focus.width:'full'};
 }
 function applyFocusPreferences(){
  const prefs=focusPreferences();document.body.style.setProperty('--focus-font-size',prefs.size+'px');document.body.dataset.focusWidth=prefs.width;
@@ -27,7 +27,7 @@ function focusToolbar(){
  const doc=focusDocument();bar.hidden=!documentFocus.active;
  if(!documentFocus.active||!doc)return;
  const image=doc.kind==='image',text=doc.kind==='text',mode=focusMode(),project=workbench.source==='project';
- bar.innerHTML=`<div class="focus-document-name"><span class="focus-eyebrow">MODO FOCO</span><strong title="${esc(doc.path||doc.title||doc.name)}">${esc(doc.title||doc.name)}</strong></div>
+ bar.innerHTML=`<div class="focus-document-name"><span class="focus-eyebrow">MODO FOCO</span><div class="focus-file-name"><strong title="${esc(doc.path||doc.title||doc.name)}">${esc(doc.title||doc.name)}</strong><span class="focus-doc-indicator"></span></div></div>
  <div class="focus-modes" role="group" aria-label="Visualização do arquivo">${image?'<span>Imagem</span>':[['read','Ler'],['edit','Editar'],['split','Editor e prévia']].filter(([id])=>id!=='split'||(!text&&!multiActive())).map(([id,label])=>`<button type="button" data-focus-mode="${id}" aria-pressed="${mode===id}">${label}</button>`).join('')}</div>
  <div class="focus-utilities">${!image?'<button class="icon-button" data-focus-command="find-document" aria-label="Buscar no arquivo" title="Buscar no arquivo · Ctrl F">'+icon('search')+'</button><button class="plain-button" data-focus-command="document-outline" title="Sumário do documento">Sumário</button>':''}<button class="plain-button" data-focus-appearance aria-label="Ajustar leitura">Aa</button><button class="plain-button" data-focus-fullscreen aria-pressed="${documentFocus.fullscreen}" title="Alternar tela cheia">${documentFocus.fullscreen?'Em tela cheia':'Tela cheia'}</button>${project&&!image?'<button class="plain-button" data-focus-save>Salvar</button>':''}<button class="focus-exit" data-focus-exit title="Sair do foco · Esc">${icon('close')}<span>Sair <kbd>Esc</kbd></span></button></div>
  <div class="focus-status" role="status" aria-live="polite"></div>`;
@@ -42,6 +42,9 @@ function focusToolbar(){
 function refreshFocusStatus(){
  if(!documentFocus.active)return;
  const output=$('#focus-toolbar .focus-status'),doc=focusDocument();if(!output||!doc)return;
+ const indicator=$('#focus-toolbar .focus-doc-indicator'),project=workbench.source==='project';
+ if(indicator)indicator.innerHTML=doc.kind==='image'||typeof documentStatusDot!=='function'?'':documentStatusDot(doc,project);
+ output.hidden=doc.kind==='image'||!(doc.error||doc.conflict||!storageOK);
  output.textContent=doc.kind==='image'?'Visualização de imagem':workbench.source==='project'?paneStatus(doc):storageOK?'Salvamento automático':'Falha ao salvar · exporte uma cópia';
  output.classList.toggle('has-unsaved',!!(doc.dirty||doc.error||doc.conflict)||!storageOK);
 }
@@ -52,14 +55,13 @@ function refreshFocus(){
  document.body.classList.toggle('focus-multiple',documentFocus.active&&multiActive());
  document.body.classList.toggle('focus-reading',documentFocus.active&&focusMode()==='read');
  applyFocusPreferences();focusToolbar();
- for(const [block,value] of documentFocus.editability){if(!block.isConnected)documentFocus.editability.delete(block);else if(!documentFocus.active){block.contentEditable=value;documentFocus.editability.delete(block)}}
- if(documentFocus.active){for(const block of document.querySelectorAll('#main .visual-block')){if(!documentFocus.editability.has(block))documentFocus.editability.set(block,block.contentEditable);block.contentEditable=focusMode()==='read'?'false':documentFocus.editability.get(block)}}
+ updateVisualEditability();
  const title=$('#note-title');if(title)title.readOnly=documentFocus.active&&focusMode()==='read';
  if(documentFocus.active){document.querySelectorAll('.editing-pane').forEach((pane,i)=>pane.classList.toggle('focus-active-pane',i===studio.active))}
- const tools=$('#studio-tools');
- if(tools&&doc&&!tools.querySelector('[data-action="focus"]'))tools.insertAdjacentHTML('beforeend','<button class="plain-button" data-action="focus" title="Modo foco em tela cheia · Ctrl Shift F">'+icon('spark')+'<span>Foco</span></button>');
- // Images don't use the editor toolbar, but still offer the same focus action.
- if(doc?.kind==='image'&&!$('.project-document-toolbar [data-action="focus"]'))$('.project-document-toolbar>div:last-child')?.insertAdjacentHTML('beforeend','<button class="plain-button" data-action="focus">'+icon('spark')+'Foco</button>');
+ const host=$('.project-document-toolbar>div:last-child,.split-workspace-heading,.note-tools');
+ if(doc&&host&&!host.querySelector('[data-action="focus"]')){
+  host.insertAdjacentHTML('beforeend','<button class="icon-button" data-action="focus" title="Modo foco · Ctrl Shift F" aria-label="Modo foco">'+icon('focus')+'</button>');
+ }
 }
 async function setFocusFullscreen(enabled){
  if(window.amagoDesktop?.fullscreen){const result=await window.amagoDesktop.fullscreen(enabled);documentFocus.fullscreen=result.fullscreen}
@@ -84,8 +86,7 @@ async function exitDocumentFocus(){
  if(!documentFocus.active)return;
  if(documentFocus.busy){documentFocus.exitRequested=true;return}
  documentFocus.active=false;documentFocus.busy=true;document.body.classList.remove('focus-mode','focus-multiple','focus-fullscreen','focus-reading');
- for(const [block,value] of documentFocus.editability)if(block.isConnected)block.contentEditable=value;
- documentFocus.editability.clear();
+ updateVisualEditability();
  const editor=$('#project-editor');if(editor)editor.readOnly=false;
  const title=$('#note-title');if(title)title.readOnly=false;
  $('#focus-toolbar')?.setAttribute('hidden','');
@@ -101,7 +102,7 @@ const focusCommand=commandList.find(item=>item[1]==='focus');if(focusCommand){fo
 
 function showFocusAppearance(){
  const prefs=focusPreferences();
- modal('Ajustar leitura',`<p>Escolha o tamanho do texto e a largura da página no modo foco.</p><label for="focus-font-size">Tamanho do texto <output id="focus-font-value">${prefs.size} px</output></label><input id="focus-font-size" type="range" min="14" max="24" step="1" value="${prefs.size}"><label for="focus-page-width">Largura da página</label><select class="field" id="focus-page-width"><option value="comfortable" ${prefs.width==='comfortable'?'selected':''}>Confortável</option><option value="wide" ${prefs.width==='wide'?'selected':''}>Ampla</option><option value="full" ${prefs.width==='full'?'selected':''}>Toda a largura</option></select><p>As preferências são lembradas. O conteúdo dos arquivos permanece no tamanho original.</p>`);
+ modal('Ajustar leitura',`<p>Escolha o tamanho do texto e a largura da página no modo foco.</p><label for="focus-font-size">Tamanho do texto <output id="focus-font-value">${prefs.size} px</output></label><input id="focus-font-size" type="range" min="10" max="48" step="1" value="${prefs.size}"><label for="focus-page-width">Largura da página</label><select class="field" id="focus-page-width"><option value="comfortable" ${prefs.width==='comfortable'?'selected':''}>Confortável</option><option value="wide" ${prefs.width==='wide'?'selected':''}>Ampla</option><option value="full" ${prefs.width==='full'?'selected':''}>Toda a largura</option></select><p>As preferências são lembradas. O conteúdo dos arquivos permanece no tamanho original.</p>`);
  $('#focus-font-size').oninput=e=>{interfacePrefs().focus={...focusPreferences(),size:+e.target.value};$('#focus-font-value').textContent=e.target.value+' px';applyFocusPreferences()};
  $('#focus-font-size').onchange=()=>persist();$('#focus-page-width').onchange=e=>{interfacePrefs().focus={...focusPreferences(),width:e.target.value};applyFocusPreferences();persist()};
 }
@@ -126,6 +127,7 @@ window.addEventListener('keydown',e=>{
  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='f'&&!e.altKey){e.preventDefault();e.stopImmediatePropagation();if(!$('.modal'))actions.focus();return}
  if(e.key==='Escape'&&documentFocus.active){
   e.preventDefault();e.stopImmediatePropagation();
+  if(e.target.id==='add-document-tag'&&$('#document-tag-options')&&!$('#document-tag-options').hidden){e.target.closest('.metadata-tag-picker').querySelector('.tag-show-options').click();return}
   if($('#editor-completion')){closeCompletion();return}
   if($('#document-find-panel')&&typeof closeDocumentFind==='function'){closeDocumentFind();return}
   if($('.modal')){closeModal();return}

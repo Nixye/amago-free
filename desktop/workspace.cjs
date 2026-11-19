@@ -4,6 +4,7 @@ const {createHash,randomUUID}=require('node:crypto');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const MARKDOWN=/\.(md|markdown)$/i, IMAGE=/\.(png|jpe?g|gif|webp|bmp|svg)$/i;
 const files=require('../dist/file-core.js');
+const {isRepositoryRoot}=require('./git.cjs');
 class Workspace {
   constructor(root){this.root=root;this.queue=Promise.resolve()}
   static async open(root){const resolved=await fs.realpath(root);if(!(await fs.stat(resolved)).isDirectory())throw Error('Selecione uma pasta.');return new Workspace(resolved)}
@@ -21,7 +22,7 @@ class Workspace {
         if(entry.isDirectory())result.push({name:entry.name,path:rel,kind:'directory',children:await visit(path.join(dir,entry.name),rel,depth+1)});
         else if(entry.isFile()){const stat=await fs.stat(path.join(dir,entry.name)).catch(()=>null);result.push({updated:stat?.mtime.toISOString(),created:stat?.birthtime.toISOString(),name:entry.name,path:rel,kind:files.kind(entry.name)})};
       }return result;
-    };return {name:path.basename(this.root)||this.root,root:this.root,entries:await visit(this.root),truncated,warnings};
+    };return {name:path.basename(this.root)||this.root,root:this.root,gitRepository:await isRepositoryRoot(this.root),entries:await visit(this.root),truncated,warnings};
   }
   async read(relative){const file=await this.resolve(relative);if(!files.editable(file))throw Error('Este formato ainda não é suportado para edição.');const stat=await fs.stat(file);if(!stat.isFile()||stat.size>5*1024*1024)throw Error('O limite para edição é 5 MB por arquivo.');const data=await fs.readFile(file);if(data.includes(0))throw Error('Arquivo binário ou UTF-16. Converta para UTF-8 antes de editar.');let body;try{body=new TextDecoder('utf-8',{fatal:true}).decode(data)}catch{throw Error('Converta este arquivo para UTF-8.')}return {body,version:hash(data),size:data.length}}
   async image(relative){const file=await this.resolve(relative);if(files.kind(file)!=='image')throw Error('Imagem não suportada.');const stat=await fs.stat(file);if(stat.size>25*1024*1024)throw Error('O limite de prévia é 25 MB.');const bytes=await fs.readFile(file),ext=path.extname(file).slice(1).toLowerCase();return {url:`data:image/${ext==='svg'?'svg+xml':ext==='jpg'?'jpeg':ext};base64,${bytes.toString('base64')}`,size:bytes.length}}

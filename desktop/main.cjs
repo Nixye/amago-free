@@ -18,6 +18,14 @@ const root=path.join(__dirname,'../dist');
 protocol.handle('amago',request=>{const url=new URL(request.url);if(url.host!=='app')return new Response('',{status:403});const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!file.startsWith(root+path.sep))return new Response('',{status:403});return net.fetch(pathToFileURL(file).href)});
 const dataDir=app.getPath('userData'),file=path.join(dataDir,'vault.json');
 const trusted=event=>event.senderFrame===win?.webContents.mainFrame&&event.senderFrame?.url.startsWith('amago://app/');
+ipcMain.handle('document:pdf',async(event,title,landscape)=>{
+ if(!trusted(event))throw Error('Invalid origin');
+ const name=String(title||'Documento').replace(/[<>:"/\\|?*\x00-\x1f]/g,'-').slice(0,100);
+ const chosen=await require('electron').dialog.showSaveDialog(win,{defaultPath:name+'.pdf',filters:[{name:'PDF',extensions:['pdf']}]});
+ if(chosen.canceled)return;
+ const pdf=await event.sender.printToPDF({pageSize:'A4',landscape:landscape===true,printBackground:true});
+ await fs.writeFile(chosen.filePath,pdf);
+});
 let freeUpdateRequest=null,freeUpdateResult=null,freeUpdateChecked=0;
 ipcMain.handle('free-updates:check',async event=>{
  if(!trusted(event))throw Error('Invalid origin');
@@ -38,6 +46,8 @@ ipcMain.handle('project:tree',projectCall(p=>p.tree()));
 ipcMain.handle('project:read',projectCall((p,relative)=>p.read(relative)));
 ipcMain.handle('project:image',projectCall((p,relative)=>p.image(relative)));
 ipcMain.handle('project:save',projectCall((p,relative,body,version)=>p.save(relative,body,version)));
+ipcMain.handle('project:list-trash',projectCall(p=>p.operations.listTrash()));
+ipcMain.handle('project:trash-action',projectCall((p,id,action)=>p.operations.trashAction(id,action)));
 ipcMain.handle('project:preview-operation',projectCall((p,args)=>p.operations.preview(args)));
 ipcMain.handle('project:apply-operation',projectCall((p,id)=>p.operations.apply(id)));
 let gitBusy=false;

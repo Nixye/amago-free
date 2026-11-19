@@ -1,14 +1,54 @@
 'use strict';
 // All folder Markdown documents use the same metadata engine as the personal library.
-function projectMetadataBar(){const f=workbench.file;if(f?.kind!=='markdown')return '';const meta=AmagoSearch.metadata(f.body);return `<div class="document-metadata"><button class="plain-button" data-action="project-properties">${icon('settings')}Propriedades</button><div>${meta.tags.map(t=>`<button class="tag-chip" data-document-query="tag:${esc(t)}"># ${esc(t)}</button>`).join('')||'<span>Sem tags</span>'}${meta.mentions.map(t=>`<button class="mention-chip" data-document-query="mention:&quot;${esc(t)}&quot;">@ ${esc(t)}</button>`).join('')}</div><small>${discovery.indexing?'Lendo workspace…':'Markdown integrado ao workspace'}</small></div>`}
+function projectMetadataBar(){const f=workbench.file;if(f?.kind!=='markdown')return '';const meta=AmagoSearch.metadata(f.body);return `<div class="document-metadata"><button class="plain-button" data-action="edit-tags">${icon('tag')} Etiquetas</button><button class="plain-button" data-action="project-properties">${icon('settings')}Propriedades</button><div>${meta.tags.map(t=>`<button class="tag-chip" data-document-query="tag:${esc(t)}"># ${esc(t)}</button>`).join('')||'<span>Sem tags</span>'}${meta.mentions.map(t=>`<button class="mention-chip" data-document-query="mention:&quot;${esc(t)}&quot;">@ ${esc(t)}</button>`).join('')}</div><small>${discovery.indexing?'Lendo workspace…':'Markdown integrado ao workspace'}</small></div>`}
 function refreshProjectContext(){if(state.view!=='project'||workbench.file?.kind!=='markdown')return;const current=$('#main>.context-panel');if(current)current.outerHTML=projectNoteContext();else $('#main').insertAdjacentHTML('beforeend',projectNoteContext());updateStudioTools();applyInterface()}
 const integratedProject=renderProject;
 renderProject=function(){integratedProject();if(workbench.file?.kind==='markdown'){$('.project-document-toolbar').insertAdjacentHTML('afterend',projectMetadataBar());refreshProjectContext()}updateStudioTools();applyInterface()};
 const integratedToggle=actions['toggle-connections'];actions['toggle-connections']=()=>{if(state.view==='project'&&workbench.file?.kind==='markdown')refreshProjectContext();integratedToggle()};
 // A plain-text document should never gain Markdown frontmatter from the property editor.
-activeProperties=function(){cacheCurrentFile();const project=workbench.source==='project',doc=project?workbench.file:note();if(!doc)return;if(project&&doc.kind!=='markdown'){modal('Propriedades do arquivo',`<p><strong>${esc(doc.path)}</strong></p><p>Texto UTF-8 · ${(new TextEncoder().encode(doc.body||'').length/1024).toFixed(1)} KB</p><p>Propriedades Markdown estão disponíveis em arquivos .md e .markdown.</p>`);return}const meta=AmagoSearch.metadata(doc.body),tags=project?meta.propertyTags:[...new Set([...(doc.tags||[]),...meta.propertyTags])];
- modal('Propriedades do Markdown',`<form id="markdown-properties"><div class="property-file">${icon('note')}${esc(doc.path||doc.title)}</div>${!project?`<label>Pasta<select class="field" name="folder">${vault.folders.map(f=>`<option ${doc.folder===f?'selected':''}>${esc(f)}</option>`).join('')}</select></label>`:''}<div class="property-grid"><label>Tags das propriedades<input class="field" name="tags" value="${esc(tags.join(', '))}" placeholder="projeto, estudo/livros"></label><label>Apelidos (aliases)<input class="field" name="aliases" value="${esc(meta.aliases.join(', '))}" placeholder="Outro nome para esta nota"></label><label>Data<input class="field" name="date" type="date" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(meta.date)?meta.date:'')}"></label><label>Cor do ponto<div class="property-color"><input type="color" id="md-color-picker" value="${meta.color||'#78e2df'}" aria-label="Selecionar cor do ponto"><input class="field" name="color" value="${meta.color||''}" placeholder="Automática" pattern="#[0-9a-fA-F]{6}" maxlength="7" aria-label="Cor hexadecimal"></div></label></div><p>Separe tags e apelidos por vírgula. Deixe a cor vazia para usar a cor automática.</p><div class="detected-metadata"><strong>Detectado no conteúdo</strong><p>Tags: ${meta.inlineTags.map(t=>'#'+esc(t)).join(' · ')||'nenhuma'}</p><p>Menções: ${meta.mentions.map(esc).join(' · ')||'nenhuma'}</p><small>Tags escritas no corpo continuam ativas; edite o próprio texto para removê-las.</small></div>${meta.front?`<details class="property-source"><summary>Propriedades originais (YAML)</summary><pre>${esc(meta.front)}</pre><p>As outras propriedades são preservadas ao salvar.</p></details>`:''}<div class="modal-actions">${!project?'<button type="button" class="plain-button" data-action="export-note">Exportar Markdown</button><button type="button" class="plain-button" data-action="delete-note">Mover para a lixeira</button>':''}<button class="solid-button">Salvar propriedades</button></div></form>`);
- const form=$('#markdown-properties'),color=form.elements.color;$('#md-color-picker').oninput=e=>color.value=e.target.value;color.oninput=()=>{if(/^#[\da-f]{6}$/i.test(color.value))$('#md-color-picker').value=color.value};form.onsubmit=async e=>{e.preventDefault();const data=new FormData(form),split=name=>[...new Set(String(data.get(name)).split(',').map(x=>x.trim().replace(name==='tags'?/^#/:/$^/,'' )).filter(Boolean))];const tags=split('tags');if(tags.some(t=>!/^[-\p{L}\p{N}_/]+$/u.test(t))){toast('Use tags sem espaços, separadas por vírgula.');return}const values={tags,aliases:split('aliases'),color:color.value||null};if(data.get('date')||/^\d{4}-\d{2}-\d{2}$/.test(meta.date))values.date=data.get('date')||null;doc.body=AmagoSearch.withProperties(doc.body,values);if(project){doc.dirty=doc.body!==doc.savedBody;if(!(await saveProjectFile()))return}else{doc.tags=tags;doc.folder=data.get('folder');doc.updated=stamp();persist()}closeModal();render()};
+activeProperties=function(){
+ cacheCurrentFile();
+ const pane=multiActive()?studio.panes[studio.active]:null,project=pane?pane.source==='project':workbench.source==='project';
+ const doc=pane?paneDocument(pane):project?workbench.file:note();
+ if(!doc)return;
+ if(project&&doc.kind!=='markdown'){
+  modal('Propriedades do arquivo','<p><strong>'+esc(doc.path)+'</strong></p><p>Texto UTF-8 · '+(new TextEncoder().encode(doc.body||'').length/1024).toFixed(1)+' KB</p>');
+  return;
+ }
+ const meta=AmagoSearch.metadata(doc.body),initial=editableTagValues(doc),aliases=meta.aliases.join(', ');
+ const date=/^\d{4}-\d{2}-\d{2}$/.test(meta.date)?meta.date:'';
+ const folder=project?'':'<label class="metadata-label">Pasta<select class="field" name="folder">'+vault.folders.map(f=>'<option '+(doc.folder===f?'selected':'')+'>'+esc(f)+'</option>').join('')+'</select></label>';
+ const tags=initial.length?' <small>'+initial.length+'</small>':'';
+ const original=meta.front?'<details class="metadata-details"><summary>Ver propriedades em YAML</summary><pre class="metadata-source">'+esc(meta.front)+'</pre></details>':'';
+ modal('Propriedades do Markdown','<form id="markdown-properties" class="metadata-form">'+metadataDocumentHeading(doc)+folder+
+  '<label class="metadata-label">Nomes alternativos<input class="field" name="aliases" value="'+esc(aliases)+'" placeholder="Separe os nomes por vírgula"></label>'+
+  '<details class="metadata-details"><summary>Etiquetas'+tags+'</summary><div class="metadata-details-body">'+tagPickerFields()+'</div></details>'+
+  '<details class="metadata-details"><summary>Data e cor no mapa</summary><div class="metadata-details-body"><label class="metadata-label">Data do documento<input class="field" name="date" type="date" value="'+esc(date)+'"></label>'+
+  '<div class="metadata-label"><label for="md-color-value">Cor do ponto no mapa</label><div class="metadata-color"><input id="md-color-picker" type="color" aria-label="Escolher cor" value="'+(meta.color||'#78e2df')+'"><input id="md-color-value" class="field" name="color" value="'+(meta.color||'')+'" placeholder="Automática" maxlength="7" pattern="#[0-9a-fA-F]{6}"><button class="plain-button" type="button" data-color-auto>Automática</button></div></div></div></details>'+original+
+  '<div class="modal-actions"><button type="button" class="plain-button" data-action="close">Cancelar</button><button class="solid-button" type="submit">Salvar propriedades</button></div></form>');
+ const form=$('#markdown-properties'),picker=bindTagPicker(form,initial),color=form.elements.color,colorWell=$('#md-color-picker');
+ colorWell.oninput=()=>color.value=colorWell.value;
+ color.oninput=()=>{if(color.validity.valid&&color.value)colorWell.value=color.value};
+ form.querySelector('[data-color-auto]').onclick=()=>{color.value='';colorWell.value='#78e2df'};
+ form.onsubmit=async event=>{
+  event.preventDefault();const selected=picker.values();if(!selected)return;
+  const changed={},aliasesValue=form.elements.aliases.value;
+  if(JSON.stringify(selected)!==JSON.stringify(initial))changed.tags=selected;
+  if(aliasesValue!==aliases)changed.aliases=[...new Set(aliasesValue.split(',').map(alias=>alias.trim()).filter(Boolean))];
+  if(form.elements.date.value!==date)changed.date=form.elements.date.value||null;
+  if(color.value!==(meta.color||''))changed.color=color.value||null;
+  const hasBodyChanges=Object.keys(changed).length>0;
+  if(hasBodyChanges)doc.body=AmagoSearch.withProperties(doc.body,changed);
+  if(project&&hasBodyChanges){
+   [...form.elements].find(el=>el.type==='submit')?.setAttribute('disabled','');
+   doc.dirty=doc.body!==doc.savedBody;
+   if(!(await saveProjectFile())){closeModal();render();return}
+  }else if(!project&&(hasBodyChanges||doc.folder!==form.elements.folder.value)){
+   if(changed.tags)doc.tags=[];
+   doc.folder=form.elements.folder.value;doc.updated=stamp();persist();
+  }
+  closeModal();render();
+ };
 };
 actions['note-menu']=activeProperties;actions['project-properties']=activeProperties;
 const integratedTools=updateStudioTools;updateStudioTools=function(){integratedTools();const isText=workbench.source==='project'&&workbench.file?.kind==='text';if(isText)$('[data-action="toggle-connections"]')?.setAttribute('hidden','');if(isText)$('#main>.context-panel')?.remove()};

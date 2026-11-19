@@ -1,0 +1,11 @@
+Âmago Free 1.2.1
+
+- Minha Biblioteca reúne documentos recentes, favoritos, tarefas e conexões em um novo layout.
+- O editor exibe o estado de salvamento ao lado do documento. O modo foco oferece prévia de leitura e a estrela preenchida identifica os favoritos.
+- Etiquetas do cabeçalho e do corpo aparecem juntas. A busca aceita partes do nome, e o painel sugere etiquetas existentes.
+- Propriedades do Markdown agrupam localização e metadados. Os ajustes de leitura e edição permitem escolher o tamanho da fonte com um controle deslizante.
+- A lixeira permite pesquisar, restaurar e excluir definitivamente arquivos e pastas. O envio à lixeira e a exclusão definitiva pedem confirmação.
+- O mapa enquadra as conexões visíveis e indica a direção dos vínculos. O menu Exportar reúne os formatos disponíveis para o documento ou mapa.
+- A integração Git aparece nos projetos reconhecidos como repositórios.
+
+Os downloads para Windows x64 incluem o instalador e a versão portátil. O arquivo SHA256SUMS.txt permite verificar os dois executáveis.

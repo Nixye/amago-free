@@ -1,7 +1,12 @@
-.atlas-cards .universe-node rect{fill:var(--panel,#151c28);stroke:var(--accent);stroke-width:1.5}.atlas-cards .universe-node circle{display:none}.atlas-cards .universe-node text{font-size:10px}.atlas-motion [data-edge]{stroke-dasharray:.12 .08;animation:atlas-flow 3s linear infinite!important}.atlas-motion .node-halo{animation:atlas-pulse 3s ease-in-out infinite!important}@keyframes atlas-flow{to{stroke-dashoffset:-1}}@keyframes atlas-pulse{50%{opacity:.8;filter:drop-shadow(0 0 6px var(--accent))}}@media(prefers-reduced-motion:reduce){.atlas-motion [data-edge],.atlas-motion .node-halo{animation:none!important}}
-
-.atlas-signals{pointer-events:none;filter:drop-shadow(0 0 4px var(--accent))}svg:not(.atlas-motion) .atlas-signals{display:none}svg:not(.atlas-motion) [data-edge],svg:not(.atlas-motion) .node-halo{animation:none!important}.atlas-motion .atlas-hub{filter:drop-shadow(0 0 9px var(--accent))}.atlas-motion.atlas-cards .universe-node rect{animation:atlas-pulse 3s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.atlas-signals{display:none}.atlas-motion.atlas-cards .universe-node rect{animation:none!important}}
-
+/* Direction markers remain visible while motion is paused. */
+.atlas-cards .universe-node rect{fill:var(--panel);stroke:var(--accent);stroke-width:1.25}
+.atlas-cards .universe-node circle{display:none}
+.atlas-cards .universe-node text{font-size:10px}
+.universe-stage [data-edge]{stroke-linecap:round;stroke-dasharray:none;stroke-opacity:.74;animation:none;pointer-events:stroke}
+.universe-stage [data-edge][data-direction="none"]{stroke-opacity:.4}
+.atlas-signals{pointer-events:none}
+svg:not(.atlas-motion) .atlas-signals{display:none}
+@media(prefers-reduced-motion:reduce){.atlas-signals{display:none}}
 :root{--relation-links:#55b6ff;--relation-tags:#f2ae55;--relation-mentions:#c394ff}
 .theme-light{--relation-links:#0969da;--relation-tags:#986000;--relation-mentions:#8250df}
 .atlas-relations{display:flex;align-items:center;flex-wrap:wrap;gap:14px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:10px 0 8px;min-width:0}
@@ -17,3 +22,20 @@
 .relation-backlink>span{min-width:0;overflow-wrap:anywhere}
 .relation-backlink .relation-reasons{display:block;white-space:normal;color:var(--text);font-size:10px;line-height:1.6;margin-top:5px}
 .relation-link-details>summary{cursor:pointer;color:var(--muted);font-size:11px;padding:8px 0}
+
+.export-trigger>.icon:last-child{width:11px;height:11px;transform:rotate(90deg);opacity:.75}
+.view-export-menu{inset:auto;position:fixed;margin:0;padding:5px;min-width:190px;max-width:calc(100vw - 12px);color:var(--text);border:1px solid var(--border);border-radius:9px;background:var(--panel);box-shadow:0 8px 28px #0003}
+.view-export-menu:popover-open{display:grid;gap:2px}
+.view-export-menu button{display:flex;align-items:center;gap:10px;text-align:left;color:inherit;font:inherit;font-size:12px;border:0;background:none;padding:9px 10px;border-radius:5px;cursor:pointer}
+.view-export-menu button:is(:hover,:focus-visible){color:var(--strong);background:var(--raised)}
+.view-export-menu .icon{color:var(--muted)}
+.image-export-document{display:block;box-sizing:border-box;position:absolute;top:0;left:0;z-index:-1;pointer-events:none;width:840px;padding:40px 48px;background:white;color:#20212a;color-scheme:light;overflow-wrap:anywhere;white-space:normal;font:17px/1.55 Arial,sans-serif;--strong:#141620;--text:#20212a;--muted:#59616b;--accent:#405c88}
+.image-export-document h1,.image-export-document h2,.image-export-document h3{font-weight:650;color:#141620;line-height:1.25;margin:1em 0 .45em}
+.image-export-document>h1:first-child{font-size:31px;margin:0 0 24px}
+.image-export-document p{margin:0 0 .9em}
+.image-export-document img{max-width:100%;height:auto;object-fit:contain}
+.image-export-document button{font:inherit;padding:0;color:#405c88;background:transparent;border:0}
+.image-export-document pre{white-space:pre-wrap;overflow-wrap:anywhere;font:15px/1.5 monospace;background:#f2f3f6;color:#20212a;padding:14px;border-radius:6px}
+.image-export-document table{width:100%;border-collapse:collapse}
+.image-export-document td,.image-export-document th{border:1px solid #c5c7cf;padding:6px}
+@media(prefers-reduced-motion:no-preference){.view-export-menu:popover-open{animation:export-menu-in .13s ease-out both}@keyframes export-menu-in{from{opacity:0;translate:0 -3px}to{opacity:1;translate:0 0}}}

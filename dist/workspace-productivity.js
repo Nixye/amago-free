@@ -24,7 +24,7 @@ vaultTree=function(){
  const folders=productivitySort(vault.folders.map(name=>({name,kind:'directory',updated:vault.notes.filter(n=>n.folder===name).reduce((latest,n)=>String(n.updated||'')>latest?n.updated:latest,'')})));
  return folders.map(({name:folder})=>{
   const notes=productivitySort(vault.notes.filter(n=>n.folder===folder));
-  return `<div><button class="project-entry" style="--depth:0" data-folder="${esc(folder)}" aria-expanded="${state.openFolders.has(folder)}"><span class="tree-chevron ${state.openFolders.has(folder)?'expanded':''}">${icon('chevron')}</span>${icon('folder')}<span>${esc(folder)}</span><small>${notes.length}</small></button>${state.openFolders.has(folder)?notes.map(n=>`<button class="project-entry ${state.id===n.id&&state.view==='notes'?'selected':''}" style="--depth:1" data-note="${esc(n.id)}"><span class="tree-spacer"></span>${icon('note')}<span>${esc(n.title)}</span>${n.favorite?'<small>✦</small>':''}</button>`).join(''):''}</div>`;
+  return `<div><button class="project-entry" style="--depth:0" data-folder="${esc(folder)}" aria-expanded="${state.openFolders.has(folder)}"><span class="tree-chevron ${state.openFolders.has(folder)?'expanded':''}">${icon('chevron')}</span>${icon('folder')}<span>${esc(folder)}</span><small>${notes.length}</small></button>${state.openFolders.has(folder)?notes.map(n=>`<button class="project-entry ${state.id===n.id&&state.view==='notes'?'selected':''}" style="--depth:1" data-note="${esc(n.id)}"><span class="tree-spacer"></span>${icon('note')}<span>${esc(n.title)}</span>${n.favorite?'<small class="file-favorite" aria-label="Favorito">'+icon('star')+'</small>':''}</button>`).join(''):''}</div>`;
  }).join('');
 };
 const productivityRenderTree=renderTree;
@@ -135,7 +135,7 @@ document.addEventListener('focusin',e=>{const dialog=$('.modal');if(!dialog||dia
 
 function workspacePaletteCommands(){
  const project=workbench.source==='project',personalOnly=new Set(['new','daily','templates','history','duplicate','export-note','backup','import','trash','delete-note']);
- const commands=commandList.filter(([,action])=>!project||!personalOnly.has(action)).map(([title,action,shortcut])=>({title,shortcut,run:()=>actions[action]?.()}));
+ const commands=commandList.filter(([,action])=>(action!=='git-project'||projectHasGit())&&(!project||!personalOnly.has(action))).map(([title,action,shortcut])=>({title,shortcut,run:()=>actions[action]?.()}));
  if(project)commands.unshift(...[['save','Salvar arquivos abertos','Ctrl S'],['new-file','Novo arquivo Markdown','Ctrl N'],['new-folder','Nova pasta',''],['refresh','Atualizar arquivos do projeto',''],['vault','Ir para Meu universo','']].map(([action,title,shortcut])=>({title,shortcut,run:()=>workActions[action]?.()})));
  return commands;
 }

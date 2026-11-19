@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b0a16"><meta name="description" content="Âmago: seu espaço para escrever, conectar ideias e construir conhecimento.">
-  <title>Âmago Free — Escrita e conhecimento local</title>
+  <title>Âmago Free</title>
   <link rel="icon" href="assets/amago-mark.svg">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
   <script src="startup.js"></script><script src="version.js" defer></script>
-  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="refinement.css"><link rel="stylesheet" href="acrylic.css"><link rel="stylesheet" href="workbench.css"><script src="keybindings.js" defer></script><script src="app.js" defer></script><script src="refinement.js" defer></script><script src="acrylic.js" defer></script><script src="icons.js" defer></script><script src="file-core.js" defer></script><script src="recent-folders.js" defer></script><script src="project-creation.js" defer></script>
-<script src="project-adapter.js" defer></script><script src="workbench.js" defer></script><script src="link-core.js" defer></script><script src="search-core.js" defer></script><script src="discovery.js" defer></script><link rel="stylesheet" href="discovery.css"><script src="personalization.js" defer></script><link rel="stylesheet" href="personalization.css"><script src="editing-core.js" defer></script><script src="studio.js" defer></script><link rel="stylesheet" href="studio.css">
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="refinement.css"><link rel="stylesheet" href="acrylic.css"><link rel="stylesheet" href="workbench.css"><script src="keybindings.js" defer></script><script src="document-status.js" defer></script><script src="app.js" defer></script><script src="refinement.js" defer></script><script src="acrylic.js" defer></script><script src="icons.js" defer></script><script src="file-core.js" defer></script><script src="recent-folders.js" defer></script><script src="project-creation.js" defer></script>
+<script src="project-adapter.js" defer></script><script src="workbench.js" defer></script><script src="link-core.js" defer></script><script src="search-core.js" defer></script><script src="graph-layout.js" defer></script><script src="discovery.js" defer></script><link rel="stylesheet" href="discovery.css"><script src="personalization.js" defer></script><link rel="stylesheet" href="personalization.css"><script src="editing-core.js" defer></script><script src="studio.js" defer></script><link rel="stylesheet" href="studio.css">
 <link rel="stylesheet" href="compatibility.css"><script src="compatibility.js" defer></script><link rel="stylesheet" href="navigation.css"><script src="navigation.js" defer></script><link rel="stylesheet" href="interaction.css"><script src="refactor-core.js" defer></script><script src="project-ops-core.js" defer></script><script src="completion-core.js" defer></script><script src="interaction.js" defer></script><script src="file-actions.js" defer></script><script src="atlas-views.js" defer></script><link rel="stylesheet" href="atlas-views.css"><script src="document-tools.js" defer></script><link rel="stylesheet" href="document-tools.css"><script src="document-navigation-core.js" defer></script><script src="document-navigation.js" defer></script><link rel="stylesheet" href="document-navigation.css"><script src="workspace-productivity.js" defer></script><link rel="stylesheet" href="workspace-productivity.css"><script src="workspace-navigation.js" defer></script><link rel="stylesheet" href="workspace-navigation.css"><script src="writing-preferences-core.js" defer></script><script src="writing-preferences.js" defer></script><link rel="stylesheet" href="writing-preferences.css"><script src="editor-operations-core.js" defer></script><script src="editor-operations.js" defer></script><link rel="stylesheet" href="editor-operations.css"><script src="image-viewer.js" defer></script><link rel="stylesheet" href="image-viewer.css"><script src="focus-mode.js" defer></script><link rel="stylesheet" href="focus-mode.css"><script src="reading-position.js" defer></script><script src="sidebar-layout.js" defer></script><link rel="stylesheet" href="sidebar-layout.css">
 <link rel="stylesheet" href="brand.css"><script src="free-edition.js" defer></script><script src="usability.js" defer></script><script src="document-split.js" defer></script><script src="map-usability.js" defer></script><link rel="stylesheet" href="usability.css">
 <script src="free-updates.js" defer></script>
+<script src="document-library.js" defer></script><script src="pdf-export.js" defer></script><link rel="stylesheet" href="workspace-design.css">
 </head>
 <body>
-<div id="startup-splash" role="status" aria-label="Iniciando Âmago"><div class="splash-orbit"><i></i><img src="assets/amago-mark.svg" alt=""></div><strong>âmago<span>.</span></strong><small class="splash-edition">FREE · OPEN SOURCE</small><p>Suas ideias, em profundidade.</p><div class="splash-progress"></div></div>
+<div id="startup-splash" role="status" aria-label="Iniciando Âmago"><div class="splash-orbit"><i></i><img src="assets/amago-mark.svg" alt=""></div><strong>Âmago<span>.</span></strong><small class="splash-edition">FREE · OPEN SOURCE</small><p>Suas ideias, em profundidade.</p><div class="splash-progress"></div></div>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg"><defs>
 <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16 16 4.5 4.5"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -35,12 +36,11 @@
 <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
 <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-<symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></symbol>
 <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 3h9l9 9-9 9-9-9Z"/><circle cx="8" cy="8" r="1"/></symbol>
 </defs></svg>
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="#" aria-label="Âmago, início"><span class="brand-mark"><img src="assets/amago-mark.svg" alt=""></span><span>âmago<span class="brand-dot">.</span></span><span class="beta">FREE</span></a>
+    <a class="brand" href="#" aria-label="Âmago, início"><span class="brand-mark"><img src="assets/amago-mark.svg" alt=""></span><span>Âmago<span class="brand-dot">.</span></span><span class="beta">FREE</span></a>
     <button class="vault" data-action="settings"><span class="vault-icon">L</span><span>Meu universo<small>Espaço pessoal</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
     <button class="search-trigger" data-action="search"><svg class="icon"><use href="#i-search"/></svg><span>Buscar nas notas</span><kbd>Ctrl K</kbd></button>
     <nav class="primary-nav">
@@ -55,10 +55,9 @@
     <div class="sidebar-bottom"><button class="new-note" data-action="new"><svg class="icon"><use href="#i-plus"/></svg>Nova nota<kbd>Ctrl N</kbd></button><div class="bottom-row"><span><i class="online-dot"></i>Salvo neste navegador</span><button class="icon-button" data-action="settings" title="Configurações" aria-label="Configurações"><svg class="icon"><use href="#i-settings"/></svg></button></div></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><div class="header-left"><span class="separator"></span><span class="breadcrumb"><span id="crumb-workspace">Meu universo</span> <span>/</span> <span id="crumb-folder">Comece aqui</span></span></div><div class="header-right"><span class="save-state" id="save-state"><i class="online-dot"></i>Alterações salvas</span><button class="icon-button" data-action="search" aria-label="Buscar" title="Buscar"><svg class="icon"><use href="#i-search"/></svg></button></div></header>
+    <header class="topbar"><div class="header-left"><span class="separator"></span><span class="breadcrumb" aria-label="Localização"><span id="crumb-folder">Biblioteca</span></span></div><div class="header-right"><details class="workspace-summary"><summary>Resumo</summary><div><strong>Resumo da visualização</strong><span id="connection-count">0 conexões</span><span id="word-count">0 palavras</span><span id="reading-time">1 min de leitura</span><button class="plain-button" id="document-stats-button" data-action="document-statistics">Estatísticas</button></div></details><button class="icon-button" data-action="search" aria-label="Buscar" title="Buscar"><svg class="icon"><use href="#i-search"/></svg></button></div></header>
     <div class="tabbar" id="tabbar"></div>
     <main id="main"></main>
-    <footer class="statusbar"><span><svg class="icon"><use href="#i-link"/></svg><span id="connection-count">0 conexões</span><span class="status-divider">·</span><span>Markdown</span></span><span><span id="word-count">0 palavras</span><span class="status-divider">·</span><span id="reading-time">1 min de leitura</span><span class="status-divider">·</span><span class="status-brand">Um universo começa por dentro <span>✧</span></span></span></footer>
   </div>
 </div>
 <div id="modal-root"></div><div id="toast" role="status" aria-live="polite"></div>

@@ -1,14 +1,27 @@
 'use strict';
 async function gitPanel(){
- if(!window.amagoDesktop?.git){toast('A integração Git está disponível no aplicativo Windows.');return}
+ if(!projectHasGit())return;
  modal('Repositório Git',`<p>Use a autenticação e a identidade já configuradas no Git do Windows.</p><div class="settings-button-grid"><button class="plain-button" id="git-clone">Clonar repositório</button><button class="plain-button" id="git-status">Atualizar estado</button></div><pre id="git-result" style="white-space:pre-wrap;max-height:240px;overflow:auto">Consultando…</pre><label>Mensagem do commit<input class="field" id="git-message" placeholder="Descreva as alterações"></label><label>Branch para mesclar<select class="field" id="git-branch"></select></label><div class="modal-actions"><button class="plain-button" data-git="fetch">Buscar atualizações</button><button class="plain-button" data-git="merge">Mesclar branch</button><button class="plain-button" data-git="resolve">Marcar conflitos editados como resolvidos</button><button class="plain-button" data-git="commit">Commit de todas as alterações</button><button class="solid-button" data-git="push">Enviar commits</button></div><p>O commit inclui todos os arquivos alterados e não ignorados do projeto. Mesclagens exigem uma árvore limpa. Não há envio forçado.</p>`);
  const show=result=>{const output=$('#git-result');if(!output)return;output.textContent=result.error||`Branch: ${result.branch||'(sem branch)'}\n\n${result.changes?.join('\n')||'Nenhuma alteração local.'}`;if(result.branches)$('#git-branch').innerHTML=result.branches.map(b=>`<option>${esc(b)}</option>`).join('')};
  const inspect=async()=>show(await window.amagoDesktop.git('status'));$('#git-status').onclick=inspect;
- $('#git-clone').onclick=()=>{modal('Clonar repositório',`<form id="git-clone-form"><label>URL HTTPS<input type="url" class="field" id="git-url" required placeholder="https://github.com/empresa/notas.git"></label><label>Nova pasta<input class="field" id="git-name" required value="notas"></label><p>A pasta será criada no local selecionado na próxima etapa.</p><button class="solid-button">Clonar e abrir</button><p id="clone-result" role="status"></p></form>`);$('#git-clone-form').onsubmit=async e=>{e.preventDefault();if(!(await saveProjectFile()))return;const button=e.target.querySelector('button');button.disabled=true;const result=await window.amagoDesktop.git('clone',{url:$('#git-url').value,name:$('#git-name').value});if(result.project){studio.files.clear();studio.panes=[];workbench.project=result.project;workbench.source='project';workbench.file=null;workbench.tabs=[];workbench.expanded=new Set();state.view='project';closeModal();render();indexProject(true)}else{button.disabled=false;$('#clone-result').textContent=result.error||'Operação cancelada.'}}};
+ $('#git-clone').onclick=cloneGitProject;
  document.querySelectorAll('[data-git]').forEach(button=>button.onclick=async()=>{if(!(await saveProjectFile()))return;const op=button.dataset.git;if(['commit','push','merge'].includes(op)&&!confirm(op==='commit'?'Criar commit de todas as alterações listadas?':op==='push'?'Enviar os commits para o remoto configurado?':'Mesclar a branch selecionada? Conflitos serão preservados para resolução.'))return;document.querySelectorAll('[data-git]').forEach(b=>b.disabled=true);const result=await window.amagoDesktop.git(op,op==='commit'?$('#git-message').value:$('#git-branch').value);show(result);document.querySelectorAll('[data-git]').forEach(b=>b.disabled=false);if(op==='merge'){studio.files.clear();studio.panes=[];workbench.file=null;await refreshProject();renderMain()}});await inspect();
 }
-actions['git-project']=gitPanel;commandList.push(['Repositório Git','git-project','']);
-$('.header-right').insertAdjacentHTML('beforeend','<button class="plain-button" data-action="git-project" title="Clonar e sincronizar repositórios">Git</button>');
+function projectHasGit(){
+ return Boolean(window.amagoDesktop?.git&&workbench.source==='project'&&!workbench.project?.cloud&&workbench.project?.gitRepository);
+}
+function cloneGitProject(){modal('Clonar repositório',`<form id="git-clone-form"><label>URL HTTPS<input type="url" class="field" id="git-url" required placeholder="https://github.com/empresa/notas.git"></label><label>Nova pasta<input class="field" id="git-name" required value="notas"></label><p>A pasta será criada no local selecionado na próxima etapa.</p><button class="solid-button">Clonar e abrir</button><p id="clone-result" role="status"></p></form>`);$('#git-clone-form').onsubmit=async e=>{e.preventDefault();if(!(await saveProjectFile()))return;const button=e.target.querySelector('button');button.disabled=true;const result=await window.amagoDesktop.git('clone',{url:$('#git-url').value,name:$('#git-name').value});if(result.project){studio.files.clear();studio.panes=[];workbench.project=result.project;workbench.source='project';workbench.file=null;workbench.tabs=[];workbench.expanded=new Set();state.view='project';closeModal();render();indexProject(true)}else{button.disabled=false;$('#clone-result').textContent=result.error||'Operação cancelada.'}}}
+actions['git-project']=gitPanel;
+actions['git-clone']=cloneGitProject;
+if(window.amagoDesktop?.git)commandList.push(['Repositório Git','git-project',''],['Clonar repositório Git','git-clone','']);
+function refreshGitButton(){
+ const button=$('.header-right [data-action="git-project"]');
+ if(!projectHasGit()){button?.remove();return}
+ if(!button)$('.header-right').insertAdjacentHTML('beforeend','<button class="plain-button" data-action="git-project" title="Repositório Git">'+icon('branch')+'Git</button>');
+}
+const gitRenderTree=renderTree;
+renderTree=function(){gitRenderTree();refreshGitButton()};
+refreshGitButton();
 
 function markdownLiteral(text){return String(text).replace(/([\\`*_[\]<>#!|~])/g,'\\$1')}
 function markdownCodeSpan(text,table=false){
@@ -127,6 +140,21 @@ function runVisualCommand(preview,command,value){
 document.addEventListener('selectionchange',()=>{
  const node=getSelection()?.anchorNode,element=node?.nodeType===1?node:node?.parentElement,preview=element?.closest('#preview,#project-preview,.pane-preview');if(preview)rememberVisualSelection(preview);
 });
+function updateVisualEditability(scope=document){
+ const locked=document.body.classList.contains('focus-mode');
+ for(const block of scope.querySelectorAll('.visual-block')){
+  block.contentEditable=String(!locked);
+  if(locked){
+   for(const name of ['role','aria-label','aria-multiline'])block.removeAttribute(name);
+  }else{
+   block.setAttribute('role','textbox');block.setAttribute('aria-label','Editar trecho do documento');block.setAttribute('aria-multiline','true');
+  }
+ }
+ if(typeof annotatePreviewTasks==='function'){
+  const previews=scope.matches?.('.markdown')?[scope]:scope.querySelectorAll('#preview,#project-preview,.pane-preview');
+  for(const preview of previews)annotatePreviewTasks(preview);
+ }
+}
 function mountVisualEditors(){
  for(const preview of document.querySelectorAll('#preview,#project-preview,.pane-preview')){
   const {ref,doc,project}=visualPreviewDocument(preview);if(!doc||doc.kind==='text')continue;
@@ -144,10 +172,11 @@ function mountVisualEditors(){
    const range=current.range,selection=getSelection();if(range&&preview.contains(range.startContainer)){selection.removeAllRanges();selection.addRange(range)}else records[0].block.focus();
    runVisualCommand(preview,button.dataset.visualFormat);
   };
-  for(const record of records){const block=document.createElement('div');block.className='visual-block';block.contentEditable='true';block.setAttribute('role','textbox');block.setAttribute('aria-multiline','true');block.setAttribute('aria-label','Editar trecho do documento');block.innerHTML=(project?fileMarkdown(record.source,doc):markdown(record.source,false,doc))||'<p><br></p>';record.block=block;record.initial=block.innerHTML;preview.append(block)}
+  for(const record of records){const block=document.createElement('div');block.className='visual-block';block.innerHTML=(project?fileMarkdown(record.source,doc):markdown(record.source,false,doc))||'<p><br></p>';record.block=block;record.initial=block.innerHTML;preview.append(block)}
+  updateVisualEditability(preview);
   // Properties replace earlier handlers when the same preview is mounted again.
   preview.onpaste=event=>{if(!event.target.closest('.visual-block')?.isContentEditable)return;event.preventDefault();runVisualCommand(preview,'insertText',event.clipboardData?.getData('text/plain')||'')};
-  preview.oninput=event=>{const block=event.target.closest('.visual-block');for(const record of records)if(record.block===block||(!block&&record.block.innerHTML!==record.initial))record.edited=true;rememberVisualSelection(preview);syncVisualEditor(preview)};
+  preview.oninput=event=>{if(document.body.classList.contains('focus-mode'))return;const block=event.target.closest('.visual-block');for(const record of records)if(record.block===block||(!block&&record.block.innerHTML!==record.initial))record.edited=true;rememberVisualSelection(preview);syncVisualEditor(preview)};
  }
 }
 
@@ -160,6 +189,7 @@ function activeSourceEditor(){
  return document.querySelector(workbench.source==='project'?'#project-editor':'#editor');
 }
 function ensureSourceEditor(){
+ if(document.body.classList.contains('focus-reading'))return null;
  let editor=activeSourceEditor();if(editor)return editor;
  const doc=multiActive()?paneDocument(studio.panes[studio.active]):workbench.source==='project'?workbench.file:note();
  if(!doc||(workbench.source==='project'&&!AmagoFiles.editable(doc))||!['notes','project'].includes(state.view))return null;
@@ -169,7 +199,7 @@ function ensureSourceEditor(){
 }
 document.addEventListener('focusin',event=>{if(event.target.matches('#editor,#project-editor,[data-pane-editor]'))lastSourceEditor=event.target});
 function sourceInsertion(editor,value,start=editor?.selectionStart,end=editor?.selectionEnd,inner=null){
- if(!editor?.isConnected)return false;
+ if(!editor?.isConnected||editor.readOnly||editor.disabled)return false;
  const scroll=editor.scrollTop;editor.focus({preventScroll:true});editor.setRangeText(value,start,end,'end');
  if(inner)editor.setSelectionRange(start+inner[0],start+inner[1]);
  editor.dispatchEvent(new Event('input',{bubbles:true}));editor.scrollTop=scroll;lastSourceEditor=editor;return true;
@@ -213,6 +243,10 @@ function mountSourceToolbars(){
   if(!bar){bar=document.createElement('div');bar.className='format-toolbar';editor.before(bar)}
   bar.amagoEditor=editor;bar.style.gridColumn='';bar.setAttribute('role','toolbar');bar.setAttribute('aria-label','Formatação Markdown');
   bar.innerHTML='<button type="button" data-format="bold" title="Negrito" aria-label="Negrito"><b>B</b></button><button type="button" data-format="italic" title="Itálico" aria-label="Itálico"><i>I</i></button><button type="button" data-format="heading" title="Inserir título" aria-label="Inserir título">H2</button><button type="button" data-format="task">☑ Tarefa</button><button type="button" data-format="link">[[ Conexão ]]</button><button type="button" data-format="code">Código</button><button type="button" data-format="table">Tabela</button>'+(editor.id==='editor'?'<button type="button" data-action="templates">Modelos</button>':'');
+  if(editor.hasAttribute('data-pane-editor')){
+   const group=document.createElement('details'),summary=document.createElement('summary'),buttons=document.createElement('div');
+   group.className='pane-formatting';summary.textContent='Formatação';buttons.append(...bar.children);group.append(summary,buttons);bar.append(group);
+  }
   bar.onpointerdown=event=>{if(event.target.closest('button')){lastSourceEditor=editor;event.preventDefault()}};
  }
 }
