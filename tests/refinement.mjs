@@ -1,9 +1,10 @@
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const context=vm.createContext({localStorage:{getItem:()=>null,setItem:()=>{}},document:{querySelector:()=>({innerHTML:'',textContent:''})},console,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,window:{}});
+const context=vm.createContext({localStorage:{getItem:()=>null,setItem:()=>{}},document:{querySelectorAll:()=>[],querySelector:()=>({innerHTML:'',textContent:''})},console,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,window:{}});
 const base=readFileSync(new URL('../dist/app.js',import.meta.url),'utf8');
 const enhancement=readFileSync(new URL('../dist/refinement.js',import.meta.url),'utf8');
+vm.runInContext(readFileSync(new URL('../dist/document-status.js',import.meta.url),'utf8'),context);
 vm.runInContext(base.slice(0,base.indexOf("document.addEventListener('click'")),context);
 vm.runInContext(enhancement.slice(0,enhancement.indexOf("document.addEventListener('click'")),context);
 const run=s=>vm.runInContext(s,context);

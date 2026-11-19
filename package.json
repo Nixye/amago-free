@@ -1,6 +1,6 @@
 {
   "name": "amago-free",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "Âmago Free: Markdown e conhecimento local, sem conta ou extensões.",
   "author": "Luna",
   "private": true,
@@ -13,7 +13,7 @@
     "test:visual": "electron tests/visual.cjs",
     "dist:win": "electron-builder --win nsis portable --x64 --publish never",
     "predist:win": "node scripts/version.mjs",
-    "test:features": "electron tests/document-navigation-visual.cjs && electron tests/editor-operations-visual.cjs && electron tests/editor-visual.cjs && electron tests/focus.cjs && electron tests/layout-regressions.cjs && electron tests/reading-image-visual.cjs && electron tests/reading-images-async.cjs && electron tests/tables-visual.cjs && electron tests/workspace-navigation-visual.cjs && electron tests/workspace-productivity-visual.cjs && electron tests/writing-preferences-visual.cjs && electron tests/free-edition.cjs && npm run test:usability",
+    "test:features": "electron tests/document-navigation-visual.cjs && electron tests/editor-operations-visual.cjs && electron tests/editor-visual.cjs && electron tests/focus.cjs && electron tests/layout-regressions.cjs && electron tests/reading-image-visual.cjs && electron tests/reading-images-async.cjs && electron tests/tables-visual.cjs && electron tests/workspace-navigation-visual.cjs && electron tests/workspace-productivity-visual.cjs && electron tests/writing-preferences-visual.cjs && electron tests/free-edition.cjs && npm run test:usability && electron tests/document-chrome.cjs && electron tests/document-polish-visual.cjs && electron tests/export-flows-visual.cjs && electron tests/library-visual.cjs",
     "test:artifacts": "node scripts/verify-artifacts.mjs",
     "test:usability": "electron tests/usability-visual.cjs"
   },

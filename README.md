@@ -13,7 +13,7 @@ Esta edição é uma base estável: recebe **correções quando necessário**, s
 ## O que está incluído
 
 - Editor Markdown com leitura, edição e prévia; tabelas, tarefas, links e imagens locais.
-- Biblioteca pessoal, pastas, favoritos, notas diárias, modelos e lixeira.
+- Biblioteca pessoal com documentos recentes, favoritos, pastas e tarefas. A lixeira restaura documentos e pastas do espaço pessoal. Em projetos locais, abra **Coleções → Lixeira do projeto** para restaurar itens ou confirmar a exclusão definitiva.
 - Projetos em pastas locais, com leitura e gravação de arquivos Markdown e texto.
 - Busca por nome e conteúdo, tags, menções e propriedades.
 - Links entre notas, referências de retorno e mapa de conexões.
@@ -49,6 +49,15 @@ Get-FileHash .\Amago-Free-1.0.0-Setup-x64.exe -Algorithm SHA256
 ```
 
 Para atualizar, feche o aplicativo e execute o novo instalador Free. Na edição portátil, substitua o executável. Faça backup antes de uma atualização. Não existe consulta automática de versões em segundo plano. O menu **Configurações → Sobre o Free** contém os links para versões e código.
+
+## Biblioteca, mapa e exportação
+
+- **Etiquetas** adiciona ou remove tags das propriedades da nota. Tags escritas no corpo aparecem junto das propriedades. Digite parte de um nome na busca ou use `#` para receber sugestões de etiquetas.
+- **Resumo**, no topo da janela, mostra as contagens da visualização atual. Nos documentos, inclui o tempo de leitura.
+- No menu de um arquivo ou pasta, **Excluir definitivamente** mostra o conteúdo afetado antes da confirmação. Em **Coleções → Lixeira**, pesquise por nome ou pasta e escolha restaurar ou excluir uma nota.
+- No mapa, **Aparência** reúne a organização, o traçado, o tamanho dos pontos e a exibição de nomes. **Enquadrar** mostra os pontos visíveis, inclusive depois de arrastá-los. Grupos densos de tags ou menções mostram uma amostra dos vínculos.
+- **Exportar** oferece PDF e imagem PNG. No editor, também é possível salvar o Markdown ou o texto original. O mapa dispõe de SVG vetorial. Documentos longos exportados como imagem são divididos em PNGs numerados dentro de um ZIP.
+- Em **Configurações → Edição** e **Visualização**, ajuste o tamanho do texto entre 10 e 48 px.
 
 ## Primeiros passos
 
@@ -148,4 +157,4 @@ Use **Edição** para fonte, espaçamento, quebra de linha e ortografia do edito
 
 O menu de contexto dos documentos oferece **Abrir ao lado**. Arraste uma nota ou texto do explorador para uma metade do editor para escolher o lado; a área de destino fica destacada. Até quatro colunas são preservadas na sessão.
 
-No mapa, busca e relações ficam juntas; **Ajustar visual do mapa** reúne organização, nomes e animação. A vizinhança percorre toda a rede conectada antes de aplicar a busca, mantendo os caminhos através de notas ocultas. O limite visual continua sendo 500 pontos.
+No mapa, busca e relações ficam juntas; **Aparência** reúne organização, nomes e animação. A vizinhança percorre toda a rede conectada antes de aplicar a busca, mantendo os caminhos através de notas ocultas. O enquadramento inclui todas as notas indexadas que correspondem ao filtro.

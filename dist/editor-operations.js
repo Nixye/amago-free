@@ -49,7 +49,7 @@ formatSourceEditor=function(kind,editor=activeSourceEditor()){
 actions['format-strike']=()=>formatSourceEditor('strike');commandList.push(['Tachado no editor ativo','format-strike','']);
 const operationsMountSource=mountSourceToolbars;
 mountSourceToolbars=function(){
- operationsMountSource();for(const bar of document.querySelectorAll('.format-toolbar'))if(!bar.querySelector('[data-format="strike"]'))bar.insertAdjacentHTML('beforeend','<button type="button" data-format="strike" title="Tachado"><s>Tachado</s></button>');
+ operationsMountSource();for(const bar of document.querySelectorAll('.format-toolbar'))if(!bar.querySelector('[data-format="strike"]'))(bar.querySelector('.pane-formatting>div')||bar).insertAdjacentHTML('beforeend','<button type="button" data-format="strike" title="Tachado"><s>Tachado</s></button>');
 };
 window.addEventListener('keydown',event=>{
  const editor=event.target;if(event.defaultPrevented||event.isComposing||!editor.matches?.('#editor,#project-editor,[data-pane-editor]')||editor.disabled||$('.modal'))return;

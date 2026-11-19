@@ -22,11 +22,7 @@ async function navigateWorkspaceHistory(direction){
  if(workspaceNavigation.busy)return;recordWorkspaceVisit();const history=workspaceHistory(),index=historyDestination(direction);if(index<0)return;
  const key=productivityWorkspaceKey();workspaceNavigation.busy=true;workspaceNavigation.historyJump=true;
  try{if(await openWorkspaceDocument(history.entries[index])&&productivityWorkspaceKey()===key)history.cursor=index}
- catch(error){toast(error.message)}finally{workspaceNavigation.busy=false;workspaceNavigation.historyJump=false;recordWorkspaceVisit();refreshWorkspaceHistoryControls()}
-}
-function refreshWorkspaceHistoryControls(){
- let controls=$('#workspace-history-controls');if(!controls){controls=document.createElement('div');controls.id='workspace-history-controls';controls.innerHTML='<button class="icon-button" data-workspace-history="-1" aria-label="Voltar ao documento anterior" title="Voltar · Alt ←">←</button><button class="icon-button" data-workspace-history="1" aria-label="Avançar ao próximo documento" title="Avançar · Alt →">→</button>';$('.header-left').prepend(controls)}
- controls.querySelector('[data-workspace-history="-1"]').disabled=historyDestination(-1)<0;controls.querySelector('[data-workspace-history="1"]').disabled=historyDestination(1)<0;
+ catch(error){toast(error.message)}finally{workspaceNavigation.busy=false;workspaceNavigation.historyJump=false;recordWorkspaceVisit()}
 }
 async function cycleWorkspaceTab(direction){
  if(workspaceNavigation.busy)return;const tabs=workspaceTabIds();if(tabs.length<2)return;
@@ -143,8 +139,8 @@ async function followWorkspaceReference(element){
 
 actions['quick-open']=showWorkspaceQuickOpen;actions['history-back']=()=>navigateWorkspaceHistory(-1);actions['history-forward']=()=>navigateWorkspaceHistory(1);actions['pin-tab']=()=>toggleWorkspacePin();actions['close-other-tabs']=()=>closeWorkspaceTabs('others');actions['close-right-tabs']=()=>closeWorkspaceTabs('right');actions['close-all-tabs']=()=>closeWorkspaceTabs('all');
 commandList.push(['Abrir documento pelo nome','quick-open','Ctrl P'],['Voltar ao documento anterior','history-back','Alt ←'],['Avançar no histórico','history-forward','Alt →'],['Fixar ou desafixar aba','pin-tab',''],['Fechar outras abas não fixadas','close-other-tabs',''],['Fechar abas à direita não fixadas','close-right-tabs',''],['Fechar todas as abas não fixadas','close-all-tabs','']);
-const workspaceNavigationRenderMain=renderMain;renderMain=function(){workspaceNavigationRenderMain();recordWorkspaceVisit();refreshWorkspaceHistoryControls()};
-const workspaceNavigationActivatePane=activatePane;activatePane=function(index){workspaceNavigationActivatePane(index);recordWorkspaceVisit();refreshWorkspaceHistoryControls()};
+const workspaceNavigationRenderMain=renderMain;renderMain=function(){workspaceNavigationRenderMain();recordWorkspaceVisit()};
+const workspaceNavigationActivatePane=activatePane;activatePane=function(index){workspaceNavigationActivatePane(index);recordWorkspaceVisit()};
 window.addEventListener('keydown',e=>{
  if(e.isComposing||$('.modal'))return;
  if($('#workspace-tab-menu')&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();removeWorkspaceTabMenu();return}
@@ -156,4 +152,4 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('contextmenu',e=>{const tab=e.target.closest('#tabbar [data-workspace-tab]');if(!tab)return;e.preventDefault();e.stopImmediatePropagation();showWorkspaceTabMenu(tab.dataset.workspaceTab,tab,e.clientX,e.clientY)},true);
 document.addEventListener('click',e=>{const history=e.target.closest('[data-workspace-history]'),options=e.target.closest('[data-workspace-tab-options]');if(history)navigateWorkspaceHistory(+history.dataset.workspaceHistory);if(options){const rect=options.getBoundingClientRect();showWorkspaceTabMenu(workspaceActiveId(),options,rect.left,rect.bottom)}});
 window.addEventListener('pointerdown',e=>{if(!e.target.closest('#workspace-tab-menu'))removeWorkspaceTabMenu()},true);
-renderTabs();renderTree();recordWorkspaceVisit();refreshWorkspaceHistoryControls();
+renderTabs();renderTree();recordWorkspaceVisit();

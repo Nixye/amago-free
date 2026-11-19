@@ -13,10 +13,28 @@ assert.deepEqual(C.token('[[Des]]',5),{kind:'page',query:'Des',start:0,end:7});a
 const temp=await mkdtemp(path.join(os.tmpdir(),'amago-operations-test-'));
 try{
  await mkdir(path.join(temp,'Notas'));await mkdir(path.join(temp,'Outro'));for(const d of docs)await writeFile(path.join(temp,d.path),d.path.endsWith('.png')?Buffer.from([0,1,2,255]):d.body);const w=await Workspace.open(temp),ops=operations(w);
+ await mkdir(path.join(temp,'Excluir'));
+ await writeFile(path.join(temp,'Excluir','Rascunho.txt'),'primeira versão');
+ const obsolete=await ops.preview({action:'purge',path:'Excluir'});
+ await writeFile(path.join(temp,'Excluir','Rascunho.txt'),'alterado');
+ await assert.rejects(ops.apply(obsolete.id),/mudaram/);
+ const latest=await ops.preview({action:'purge',path:'Excluir'});
+ await ops.apply(latest.id);
+ await assert.rejects(access(path.join(temp,'Excluir')));
+ await assert.rejects(access(path.join(temp,'.amago','operations',latest.id)));
  let p=await ops.preview({action:'rename',path:'Notas/Destino.md',name:'Novo nome.md'});assert.equal(p.referenceCount,5);await writeFile(path.join(temp,'Outro/Leitor.md'),'externally modified');await assert.rejects(ops.apply(p.id),/mudaram/);assert.equal(await readFile(path.join(temp,'Notas/Destino.md'),'utf8'),docs[1].body);
  await writeFile(path.join(temp,'Outro/Leitor.md'),docs[2].body);p=await ops.preview({action:'rename',path:'Notas/Destino.md',name:'Novo nome.md'});let result=await ops.apply(p.id);assert(result.done);await assert.rejects(access(path.join(temp,'Notas/Destino.md')));assert((await readFile(path.join(temp,'Notas/Origem.md'),'utf8')).includes('Novo%20nome.md'));assert.equal(await readFile(path.join(temp,result.backup,'original/Notas/Destino.md'),'utf8'),docs[1].body);
  p=await ops.preview({action:'rename',path:'Notas',name:'Pesquisa'});result=await ops.apply(p.id);assert(result.done);assert((await readFile(path.join(temp,'Outro/Leitor.md'),'utf8')).includes('/Pesquisa/'));assert.deepEqual(await readFile(path.join(temp,'img.png')),Buffer.from([0,1,2,255]));
  p=await ops.preview({action:'remove',path:'Pesquisa'});assert.equal(p.files.length,2);assert.equal(p.references.length,1);result=await ops.apply(p.id);await assert.rejects(access(path.join(temp,'Pesquisa')));assert((await readFile(path.join(temp,result.backup,'original/Pesquisa/Origem.md'),'utf8')).includes('Novo%20nome'));
+
+ const trash=await ops.listTrash();assert.equal(trash.length,1);assert.equal(trash[0].path,'Pesquisa');
+ const trashed=trash[0].id;await mkdir(path.join(temp,'Pesquisa'));await assert.rejects(ops.trashAction(trashed,'restore'),/Já existe/);
+ await (await import('node:fs/promises')).rmdir(path.join(temp,'Pesquisa'));
+ assert((await ops.trashAction(trashed,'restore')).done);assert.equal((await ops.listTrash()).length,0);
+ assert((await readFile(path.join(temp,'Pesquisa/Origem.md'),'utf8')).includes('Novo%20nome'));
+ let again=await ops.preview({action:'remove',path:'Pesquisa'});await ops.apply(again.id);
+ assert((await ops.trashAction(again.id,'purge')).done);assert.equal((await ops.listTrash()).length,0);
+ await assert.rejects(ops.trashAction('../escape','purge'));
  await assert.rejects(ops.preview({action:'remove',path:'../outside'}));await assert.rejects(ops.preview({action:'remove',path:'.amago'}));await mkdir(path.join(temp,'Protected'));await mkdir(path.join(temp,'Protected','.git'));await assert.rejects(ops.preview({action:'remove',path:'Protected'}),/protegidos/);
 }finally{assert.equal(path.dirname(temp),path.resolve(os.tmpdir()));assert(path.basename(temp).startsWith('amago-operations-test-'));await rm(temp,{recursive:true,force:true})}
 // An injected write failure must restore already changed references and preserve source data.
@@ -24,9 +42,16 @@ const Ops=require('../dist/project-ops-core.js');const files=new Map([['a.md',Bu
 const io={list:async()=>[...files.keys()].filter(p=>!p.startsWith('.amago/')).sort().map(path=>({path,kind:'markdown'})),read:async p=>{if(!files.has(p))throw Error('missing');return files.get(p)},exists:async p=>files.has(p),mkdir:async()=>{},write:async(p,b,exclusive)=>{if(p==='c.md'&&fail){fail=false;throw Error('injected failure')}if(exclusive&&files.has(p))throw Error('exists');files.set(p,new Uint8Array(b))},remove:async p=>files.delete(p)};
 const ops=Ops.create(io),p=await ops.preview({action:'rename',path:'b.md',name:'B2.md'});await assert.rejects(ops.apply(p.id),/injected failure/);assert.equal(Buffer.from(files.get('a.md')).toString(),'[[b]]');assert.equal(Buffer.from(files.get('b.md')).toString(),'# B');assert([...files.keys()].some(p=>p.endsWith('/original/b.md')));
 // Shared graph helpers are deterministic, bounded and do not include disconnected notes.
-const ui=await readFile(new URL('../dist/interaction.js',import.meta.url),'utf8'),ctx=vm.createContext({});vm.runInContext(ui.slice(ui.indexOf('function graphNeighborhood'),ui.indexOf('const fullGraphData')),ctx);assert.deepEqual([...ctx.graphNeighborhood([{a:'a',b:'b'},{a:'b',b:'c'},{a:'x',b:'y'}],'a',2)].sort(),['a','b','c']);for(const layout of ['organic','circle','folders'])for(let i=0;i<docs.length;i++){const p=ctx.graphPosition(docs,i,layout);assert(Number.isFinite(p.x)&&Number.isFinite(p.y))}
+const ui=await readFile(new URL('../dist/interaction.js',import.meta.url),'utf8'),ctx=vm.createContext({});vm.runInContext(ui.slice(ui.indexOf('function graphNeighborhood'),ui.indexOf('const fullGraphData')),ctx);assert.deepEqual([...ctx.graphNeighborhood([{a:'a',b:'b'},{a:'b',b:'c'},{a:'x',b:'y'}],'a',2)].sort(),['a','b','c']);ctx.docId=d=>d.id||d.path;vm.runInContext(await readFile(new URL('../dist/graph-layout.js',import.meta.url),'utf8'),ctx);
+for(const layout of ['organic','circle','folders','flow','columns'])for(const p of ctx.arrangeGraph(docs,[],layout).values())assert(Number.isFinite(p.x)&&Number.isFinite(p.y));
 const actionsSource=await readFile(new URL('../dist/file-actions.js',import.meta.url),'utf8'),personalContext=vm.createContext({AmagoLinks:L,AmagoRefactor:R,AmagoSearch:S,structuredClone,resolveLink:(docs,source,link)=>L.resolve(docs,source,link),stamp:()=>new Date().toISOString(),uid:()=> 'replacement',persist(){},render(){},vault:{notes:structuredClone(personal),folders:['A','B'],trash:[]},state:{tabs:['a','b'],openFolders:new Set()},studio:{panes:[{source:'vault',id:'a'}]}});
 vm.runInContext(actionsSource.slice(actionsSource.indexOf('function personalPlan'),actionsSource.indexOf('async function previewFileOperation'))+actionsSource.slice(actionsSource.indexOf('async function applyFileOperation'),actionsSource.lastIndexOf('\nrenderTree();')),personalContext);
 let item={project:false,path:'B',folder:true},personalRename=personalContext.personalPlan(item,'rename','Renamed');await personalContext.applyFileOperation(item,personalRename);assert.equal(personalContext.vault.notes[1].folder,'Renamed');assert(personalContext.vault.notes[0].body.includes('Renamed/Destino.md'));
 item={project:false,path:'Renamed',folder:true};await personalContext.applyFileOperation(item,personalContext.personalPlan(item,'remove'));assert.equal(personalContext.vault.trash[0].id,'b');assert(!personalContext.vault.folders.includes('Renamed'));item={project:false,path:'A',folder:true};await personalContext.applyFileOperation(item,personalContext.personalPlan(item,'remove'));assert.equal(personalContext.vault.trash.length,2);assert.equal(personalContext.vault.notes.length,1,'Empty library remains persistable after removing every folder');
 console.log('Interaction: path and alias refactors, folder moves, recovery copies, stale-plan rejection, injected failures, personal folder trash, completions and graph neighborhoods passed.');
+
+const wide={x:8000,y:-3000,width:4000,height:2100},camera=ctx.fitGraphCamera(wide);
+assert(camera.zoom<1);
+assert(Math.abs(wide.x*camera.zoom+camera.x-(1000-(wide.x+wide.width)*camera.zoom-camera.x))<1e-6);
+assert(wide.y*camera.zoom+camera.y>=0);
+assert((wide.y+wide.height)*camera.zoom+camera.y<=600);

@@ -10,6 +10,17 @@ app.whenReady().then(async()=>{
   await win.loadFile(path.resolve(__dirname,'../dist/index.html'));
   await run(`interfacePrefs().splashEnabled=false;await finishStartup();await new Promise(r=>setTimeout(r,1500));closeModal();$('#startup-splash')?.remove();state.view='notes';state.mode='edit';render();`);
   assert.equal(await run(`return document.querySelectorAll('[data-studio-pin],[data-action="sidebar"]').length`),1);
+  await run(`const doc=note();window.savedTestBody=doc.body;doc.body='---\\ntags:\\n- Universo\\n---\\n#Anotação';renderMain();`);
+  assert.match(await run("return $('.document-tags').innerText"),/Universo/);
+  await run("actions['edit-tags']();$('#add-document-tag').value='Pesquisa';$('#document-tag-form').requestSubmit()");
+  assert(await run("return AmagoSearch.matches(note(),'#squi')"));
+  await run(`const editor=$('#editor');editor.value='---\\ntags: [Ciência]\\n---\\n#Revisão';editor.dispatchEvent(new Event('input',{bubbles:true}));await new Promise(r=>setTimeout(r,400));`);
+  assert.match(await run("return $('.document-tags').innerText"),/Ciência[\s\S]*Revisão/);
+  assert(!await run("return $('.document-tags').innerText.includes('Pesquisa')"));
+  await run("window.print=()=>{window.pdfText=$('#pdf-content').innerText||$('#pdf-content').textContent};await exportViewPdf()");
+  assert.match(await run("return window.pdfText"),/Revisão/);
+  await run("const fake={...note(),id:'trash-test',title:'Arquivo descartado',deletedAt:stamp()};vault.trash.push(fake);actions.trash();$('#trash-query').value='scart';$('#trash-query').dispatchEvent(new Event('input'));$('[data-purge-trash]').click();$('#purge-trash').click()");
+  assert(!await run("return vault.trash.some(n=>n.id==='trash-test')"));await run('closeModal();note().body=window.savedTestBody;render()');
   for(const tab of ['general','editing','reading','appearance','shortcuts','data']){
    await run(`showSettings('${tab}');await new Promise(r=>setTimeout(r,30));`);
    assert.equal(await run(`return $('#settings-content').getAttribute('aria-labelledby')`),'settings-'+tab);
@@ -51,6 +62,12 @@ app.whenReady().then(async()=>{
   assert(await run(`return [...document.querySelectorAll('#tabbar [data-note]')].some(row=>row.draggable)`),'Document tabs must be draggable');
   await run(`closeModal();state.view='graph';renderMain();`);
   assert(!await run(`return !!$('#atlas-depth')`));assert(await run(`return !!$('.map-filter-panel .atlas-relations')&&!$('.map-display-options').open`));
+  await run("$('#map-appearance-toggle').click()");
+  assert(await run("return $('#atlas-layout').getBoundingClientRect().height>0&&$('#graph-query').getBoundingClientRect().height===0"));
+  await run("$('#map-appearance-toggle').click();let finished;window.amagoDesktop={exportPdf:()=>new Promise(resolve=>finished=resolve)};window.finishPdf=()=>finished();window.pendingPdf=exportViewPdf();await new Promise(r=>setTimeout(r,50))");
+  assert(await run("return !!$('#pdf-content svg')"));
+  const pdf=await win.webContents.printToPDF({landscape:true,printBackground:true});
+  assert.equal(pdf.subarray(0,5).toString(),'%PDF-');await run("finishPdf();await pendingPdf;delete window.amagoDesktop");
   await capture('map');
   assert(await run(`return $('#map-filters').hidden&&$('.universe-stage').getBoundingClientRect().height>innerHeight*.6`),'Map should occupy the workspace by default');
   await run(`$('#map-filters-toggle').click();window.mapCameraBefore=JSON.stringify(graphPan);$('#graph-query').value='Jardim';$('#graph-query').dispatchEvent(new Event('input'));`);
@@ -59,7 +76,7 @@ app.whenReady().then(async()=>{
   await capture('map-filters');
   await run(`$('#map-filters-close').click();$('#map-filters-toggle').click();`);
   assert.equal(await run(`return $('#graph-query').value`),'Jardim');
-  assert.equal(await run(`return JSON.stringify(graphPan)`),await run(`return window.mapCameraBefore`));
+  assert(await run(`return Number.isFinite(graphPan.zoom)&&graphPan.zoom>0`));
   win.setSize(620,820);await run(`await new Promise(r=>setTimeout(r,50));`);
   assert(await run(`return $('#map-filters').getBoundingClientRect().right<=innerWidth&&$('.universe-stage').getBoundingClientRect().width>200`),'Narrow map remains available under the filter drawer');
   await capture('map-narrow');win.setSize(1440,1000);

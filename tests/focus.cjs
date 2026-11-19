@@ -45,9 +45,13 @@ app.whenReady().then(async()=>{
    showFocusAppearance();window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
    check(!document.querySelector('.modal')&&documentFocus.active,'Escape should close the dialog first');
    document.querySelector('[data-focus-mode="split"]').click();
-   check(document.querySelector('#preview .visual-block').contentEditable==='true','Split visual editor disabled');
+   check(document.querySelector('#preview .visual-block').contentEditable==='false','Focus split permits preview editing');
+   check(document.querySelector('#preview input[data-document-task-line]').disabled,'Focus split permits task toggles');
+   check(getComputedStyle(document.querySelector('.visual-toolbar')).display==='none','Focus split exposes visual formatting');
    document.querySelector('#editor').value+='\n\nNovo rascunho';document.querySelector('#editor').dispatchEvent(new Event('input',{bubbles:true}));
+   check(!document.querySelector('#preview .visual-block').isContentEditable,'Typing in source unlocked focus preview');
    await exitDocumentFocus();
+   check(document.querySelector('#preview .visual-block').isContentEditable,'Leaving focus did not restore visual editing');
    check(!documentFocus.active&&!nativeFull,'Leaving focus did not restore window');
    check(note().body.endsWith('Novo rascunho'),'Leaving focus lost edits');
    check(JSON.stringify(interfacePrefs())===prefs,'Leaving focus changed layout preferences');

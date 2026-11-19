@@ -1,3 +1,4 @@
+@import url('editor-polish.css');
 /* A document-first surface, using the selected theme's existing colors. */
 .focus-toolbar[hidden]{display:none!important}
 .focus-toolbar{display:none}
