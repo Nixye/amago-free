@@ -16,9 +16,9 @@ app.whenReady().then(async()=>{
   assert(!await hasOverflow());assert(!await run("!!$('.modal')"));await capture('desktop');
   await run("$('[data-library-section=favorites]').click()");
   assert(await run("$('.library-documents').querySelectorAll('.library-note').length===vault.notes.filter(d=>d.favorite).length"));
-  await run("$('[data-library-section=recent]').click();$('[data-library-folder]').click()");
-  assert(await run("!!$('.library-filter')&&[...document.querySelectorAll('.library-note')].every(b=>vault.notes.find(n=>n.id===b.dataset.note).folder===libraryView.folder)"));
-  await run("$('.library-filter').click();vault.skin=themeCatalog().find(t=>t.mode==='light').id;applyTheme();renderMain()");
+  await run("$('[data-library-section=folders]').click();$('.explorer-tile[data-library-folder]').click()");
+  assert(await run("!!$('.folder-trail')&&[...document.querySelectorAll('.explorer-tile[data-note]')].every(b=>vault.notes.find(n=>n.id===b.dataset.note).folder===libraryView.folder)"));
+  await run("$('[data-library-section=recent]').click();vault.skin=themeCatalog().find(t=>t.mode==='light').id;applyTheme();renderMain()");
   await capture('light');win.setSize(730,850);await new Promise(resolve=>setTimeout(resolve,120));
   assert(!await hasOverflow());await capture('compact');
   await run("$('.library-feature').click()");assert(await run("state.view==='notes'"));

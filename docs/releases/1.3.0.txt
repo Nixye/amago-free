@@ -1,0 +1,4 @@
+Âmago Free 1.3.0
+
+- Abra a aba Pastas na biblioteca para navegar pela grade de subpastas e notas, criar pastas e voltar pelos níveis do caminho. As cores acompanham o tema ativo.
+- No editor e na edição visual, selecione texto e digite aspas, parênteses, colchetes ou chaves para envolver o trecho.
